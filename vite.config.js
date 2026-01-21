@@ -47,6 +47,9 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             includeAssets: ['pwa-icon.svg'],
+            workbox: {
+                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5MB
+            },
             manifest: {
                 name: 'AI Study Companion',
                 short_name: 'StudyBuddy',
