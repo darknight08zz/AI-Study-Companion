@@ -1,0 +1,367 @@
+import { v4 as uuidv4 } from 'uuid';
+
+// Types derived from backend structures
+export type TaskStatus = 'notStarted' | 'inProgress' | 'completed';
+
+export const TaskStatusEnum = {
+    notStarted: 'notStarted' as TaskStatus,
+    inProgress: 'inProgress' as TaskStatus,
+    completed: 'completed' as TaskStatus,
+};
+
+// Helper for UI to checking status
+export const isTaskStatus = (status: TaskStatus, check: keyof typeof TaskStatusEnum) => {
+    return status === check;
+}
+
+export enum DifficultyLevel {
+    easy = 'easy',
+    medium = 'medium',
+    hard = 'hard',
+}
+
+export enum FileType {
+    pdf = 'pdf',
+    text = 'text',
+}
+
+export class ExternalBlob {
+    private _blob: Uint8Array;
+
+    constructor(blob: Uint8Array) {
+        this._blob = blob;
+    }
+
+    static fromBytes(bytes: Uint8Array): ExternalBlob {
+        return new ExternalBlob(bytes);
+    }
+}
+
+export interface StudyTask {
+    id: string;
+    title: string;
+    description: string;
+    dueDate: bigint;
+    subjectTags: string[];
+    status: TaskStatus;
+    owner: string;
+}
+
+export interface UserProfile {
+    name: string;
+    xp: bigint;
+    level: number;
+    dailyStreak: number;
+    lastActivityDate: bigint; // Timestamp
+}
+
+export interface UploadedMaterial {
+    id: string;
+    title: string;
+    content: string;
+    owner: string;
+    createdAt: bigint;
+    fileType: FileType;
+    originalFile?: any; // Simulating ExternalBlob
+}
+
+export interface QuizResult {
+    id: string;
+    score: bigint;
+    totalQuestions: bigint;
+    timestamp: bigint;
+    user: string;
+}
+
+// Additional types for features likely in progress or future
+export interface AnalyzedSyllabus {
+    id: string;
+    materialId: string;
+    topics: Topic[];
+    owner: string;
+}
+
+export interface Topic {
+    id: string;
+    title: string;
+    name: string;
+    subtopics: string[];
+    difficulty: DifficultyLevel;
+}
+
+export interface StudyPlan {
+    id: string;
+    sessions: StudySession[];
+    examDate: bigint;
+    hoursPerDay: bigint;
+    owner: string;
+}
+
+export interface StudySession {
+    id: string;
+    date: bigint;
+    topicId: string;
+    durationMinutes: number;
+    completed: boolean;
+}
+
+export interface Quiz {
+    id: string;
+    topicId: string;
+    questions: Question[];
+    owner: string;
+}
+
+export interface Question {
+    id: string;
+    text: string;
+    options: string[];
+    correctOptionIndex: number;
+}
+
+// CURRENT USER ID (Simulated)
+const CURRENT_USER_ID = 'local-user-principal-id';
+
+// Helper to serialize BigInt for JSON storage
+const replacer = (key: string, value: any) => {
+    if (typeof value === 'bigint') {
+        return value.toString() + 'n'; // Mark as bigint
+    }
+    return value;
+};
+
+// Helper to deserialize BigInt from JSON storage
+const reviver = (key: string, value: any) => {
+    if (typeof value === 'string' && /^\d+n$/.test(value)) {
+        return BigInt(value.slice(0, -1));
+    }
+    return value;
+};
+
+class LocalStorageService {
+    private getItem<T>(key: string): T | null {
+        const stored = localStorage.getItem(key);
+        if (!stored) return null;
+        try {
+            return JSON.parse(stored, reviver);
+        } catch (e) {
+            console.error('Error parsing local storage item', key, e);
+            return null;
+        }
+    }
+
+    private setItem(key: string, value: any) {
+        localStorage.setItem(key, JSON.stringify(value, replacer));
+    }
+
+    // User Profile
+    getCallerUserProfile(): UserProfile | null {
+        return this.getItem<UserProfile>('userProfile');
+    }
+
+    saveCallerUserProfile(profile: UserProfile) {
+        this.setItem('userProfile', profile);
+    }
+
+    // Gamification Helpers
+    addXp(amount: number): { newLevel: number; leveledUp: boolean } {
+        const profile = this.getCallerUserProfile();
+        if (!profile) return { newLevel: 1, leveledUp: false };
+
+        // Ensure defaults if missing (migration)
+        const currentXp = Number(profile.xp || 0n);
+        const currentLevel = profile.level || 1;
+
+        const newXp = currentXp + amount;
+
+        // Simple Level Formula: Level = floor(sqrt(XP / 100)) + 1
+        // XP required for level L: 100 * (L-1)^2
+        const newLevel = Math.floor(Math.sqrt(newXp / 100)) + 1;
+        const leveledUp = newLevel > currentLevel;
+
+        this.saveCallerUserProfile({
+            ...profile,
+            xp: BigInt(newXp),
+            level: newLevel
+        });
+
+        this.updateStreak(); // Check streak whenever XP is gained
+
+        return { newLevel, leveledUp };
+    }
+
+    updateStreak() {
+        const profile = this.getCallerUserProfile();
+        if (!profile) return;
+
+        const now = new Date();
+        const lastActivity = profile.lastActivityDate ? new Date(Number(profile.lastActivityDate)) : null;
+
+        let newStreak = profile.dailyStreak || 0;
+
+        if (lastActivity) {
+            const isSameDay = now.toDateString() === lastActivity.toDateString();
+            const isNextDay = new Date(now.getTime() - 86400000).toDateString() === lastActivity.toDateString();
+
+            if (isNextDay) {
+                newStreak++;
+            } else if (!isSameDay) {
+                newStreak = 1; // Reset if missed a day (except if same day)
+            }
+        } else {
+            newStreak = 1; // First activity
+        }
+
+        this.saveCallerUserProfile({
+            ...profile,
+            dailyStreak: newStreak,
+            lastActivityDate: BigInt(now.getTime())
+        });
+    }
+
+    // Tasks
+    getAllTasks(): StudyTask[] {
+        const tasks = this.getItem<Record<string, StudyTask>>('studyTasks') || {};
+        return Object.values(tasks);
+    }
+
+    getTasksByStatus(status: TaskStatus): StudyTask[] {
+        const tasks = this.getAllTasks();
+        return tasks.filter(t => t.status === status);
+    }
+
+    getAllTasksSortedByDueDate(): StudyTask[] {
+        return this.getAllTasks().sort((a, b) => Number(a.dueDate - b.dueDate));
+    }
+
+    createTask(title: string, description: string, dueDate: bigint, subjectTags: string[]): string {
+        const id = uuidv4();
+        const task: StudyTask = {
+            id,
+            title,
+            description,
+            dueDate,
+            subjectTags,
+            status: 'notStarted',
+            owner: CURRENT_USER_ID
+        };
+        const tasks = this.getItem<Record<string, StudyTask>>('studyTasks') || {};
+        tasks[id] = task;
+        this.setItem('studyTasks', tasks);
+        return id;
+    }
+
+    updateTask(id: string, title: string, description: string, dueDate: bigint, subjectTags: string[], status: TaskStatus) {
+        const tasks = this.getItem<Record<string, StudyTask>>('studyTasks') || {};
+        if (tasks[id]) {
+            tasks[id] = { ...tasks[id], title, description, dueDate, subjectTags, status };
+            this.setItem('studyTasks', tasks);
+        }
+    }
+
+    deleteTask(id: string) {
+        const tasks = this.getItem<Record<string, StudyTask>>('studyTasks') || {};
+        delete tasks[id];
+        this.setItem('studyTasks', tasks);
+    }
+
+    // Quiz Results
+    getQuizResultsForCaller(): QuizResult[] {
+        const results = this.getItem<Record<string, QuizResult>>('quizResults') || {};
+        return Object.values(results);
+    }
+
+    createQuizResult(score: bigint, totalQuestions: bigint): string {
+        const id = uuidv4();
+        const result: QuizResult = {
+            id,
+            score,
+            totalQuestions,
+            timestamp: BigInt(Date.now()),
+            user: CURRENT_USER_ID
+        };
+        const results = this.getItem<Record<string, QuizResult>>('quizResults') || {};
+        results[id] = result;
+        this.setItem('quizResults', results);
+        return id;
+    }
+
+    // Materials
+    getAllMaterialsForCaller(): UploadedMaterial[] {
+        const materials = this.getItem<Record<string, UploadedMaterial>>('materials') || {};
+        return Object.values(materials);
+    }
+
+    getAllMaterialsSortedByDate(): UploadedMaterial[] {
+        return this.getAllMaterialsForCaller().sort((a, b) => Number(a.createdAt - b.createdAt));
+    }
+
+    getAllMaterialsSortedByTitle(): UploadedMaterial[] {
+        return this.getAllMaterialsForCaller().sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    uploadMaterial(title: string, content: string, fileType: FileType): string {
+        const id = uuidv4();
+        const material: UploadedMaterial = {
+            id,
+            title,
+            content,
+            owner: CURRENT_USER_ID,
+            createdAt: BigInt(Date.now()),
+            fileType,
+        };
+        const materials = this.getItem<Record<string, UploadedMaterial>>('materials') || {};
+        materials[id] = material;
+        this.setItem('materials', materials);
+        return id;
+    }
+
+    uploadPdfWithBlob(title: string, content: string, pdfBlob: any): string {
+        // In local storage, we won't actually store the blob properly, but we'll store the metadata
+        const id = uuidv4();
+        const material: UploadedMaterial = {
+            id,
+            title,
+            content,
+            owner: CURRENT_USER_ID,
+            createdAt: BigInt(Date.now()),
+            fileType: FileType.pdf,
+            // originalFile: pdfBlob - Removing this to prevent hitting 5MB LocalStorage limit
+            // We only need the text content for the AI features anyway.
+        };
+        const materials = this.getItem<Record<string, UploadedMaterial>>('materials') || {};
+        materials[id] = material;
+        this.setItem('materials', materials);
+        return id;
+    }
+
+    deleteMaterial(id: string) {
+        const materials = this.getItem<Record<string, UploadedMaterial>>('materials') || {};
+        delete materials[id];
+        this.setItem('materials', materials);
+    }
+
+    // Analyzed Syllabi (Mock)
+    getAllAnalyzedSyllabiForCaller(): AnalyzedSyllabus[] { return []; }
+    getAnalyzedSyllabusByMaterial(materialId: string): AnalyzedSyllabus | null { return null; }
+    createAnalyzedSyllabus(materialId: string, topics: Topic[]): string { return 'mock-id'; }
+    updateAnalyzedSyllabus(id: string, topics: Topic[]): void { }
+    deleteAnalyzedSyllabus(id: string): void { }
+
+    // Study Plans (Mock)
+    getAllStudyPlansForCaller(): StudyPlan[] { return []; }
+    createStudyPlan(sessions: StudySession[], examDate: bigint, hoursPerDay: bigint): string { return 'mock-id'; }
+    updateStudyPlan(id: string, sessions: StudySession[], examDate: bigint, hoursPerDay: bigint): void { }
+    deleteStudyPlan(id: string): void { }
+
+    // Quizzes (Mock)
+    getAllQuizzesForCaller(): Quiz[] { return []; }
+    getQuizzesByTopic(topicId: string): Quiz[] { return []; }
+    createQuiz(questions: Question[], topicId: string): string { return 'mock-id'; }
+    deleteQuiz(id: string): void { }
+
+    // Mock Methods used by useQueries
+    getTasksByOwner(owner: string) { return this.getAllTasks(); }
+}
+
+export const localStorageService = new LocalStorageService();

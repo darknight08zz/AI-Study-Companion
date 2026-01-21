@@ -1,0 +1,310 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.625rem;
+        --background: 0.99 0 0;
+        --foreground: 0.15 0 0;
+        --card: 1 0 0;
+        --card-foreground: 0.15 0 0;
+        --popover: 1 0 0;
+        --popover-foreground: 0.15 0 0;
+        --primary: 0.55 0.22 264;
+        --primary-foreground: 0.99 0 0;
+        --secondary: 0.96 0.01 264;
+        --secondary-foreground: 0.15 0 0;
+        --muted: 0.96 0.01 264;
+        --muted-foreground: 0.50 0.01 264;
+        --accent: 0.70 0.19 330;
+        --accent-foreground: 0.99 0 0;
+        --destructive: 0.58 0.24 27;
+        --destructive-foreground: 0.99 0 0;
+        --border: 0.92 0.01 264;
+        --input: 0.92 0.01 264;
+        --ring: 0.55 0.22 264;
+        --chart-1: 0.65 0.22 264;
+        --chart-2: 0.70 0.19 330;
+        --chart-3: 0.60 0.20 200;
+        --chart-4: 0.75 0.18 150;
+        --chart-5: 0.55 0.25 300;
+        --sidebar: 0.99 0 0;
+        --sidebar-foreground: 0.15 0 0;
+        --sidebar-primary: 0.55 0.22 264;
+        --sidebar-primary-foreground: 0.99 0 0;
+        --sidebar-accent: 0.96 0.01 264;
+        --sidebar-accent-foreground: 0.15 0 0;
+        --sidebar-border: 0.92 0.01 264;
+        --sidebar-ring: 0.55 0.22 264;
+    }
+
+    .dark {
+        --background: 0.12 0.01 264;
+        --foreground: 0.98 0.01 264;
+        --card: 0.16 0.01 264;
+        --card-foreground: 0.98 0.01 264;
+        --popover: 0.16 0.01 264;
+        --popover-foreground: 0.98 0.01 264;
+        --primary: 0.70 0.22 264;
+        --primary-foreground: 0.12 0.01 264;
+        --secondary: 0.22 0.02 264;
+        --secondary-foreground: 0.98 0.01 264;
+        --muted: 0.22 0.02 264;
+        --muted-foreground: 0.65 0.02 264;
+        --accent: 0.75 0.19 330;
+        --accent-foreground: 0.98 0.01 264;
+        --destructive: 0.65 0.24 27;
+        --destructive-foreground: 0.12 0.01 264;
+        --border: 0.25 0.02 264;
+        --input: 0.25 0.02 264;
+        --ring: 0.70 0.22 264;
+        --chart-1: 0.65 0.22 264;
+        --chart-2: 0.70 0.19 330;
+        --chart-3: 0.60 0.20 200;
+        --chart-4: 0.75 0.18 150;
+        --chart-5: 0.55 0.25 300;
+        --sidebar: 0.16 0.01 264;
+        --sidebar-foreground: 0.98 0.01 264;
+        --sidebar-primary: 0.70 0.22 264;
+        --sidebar-primary-foreground: 0.98 0.01 264;
+        --sidebar-accent: 0.22 0.02 264;
+        --sidebar-accent-foreground: 0.98 0.01 264;
+        --sidebar-border: 0.25 0.02 264;
+        --sidebar-ring: 0.70 0.22 264;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+/* Custom animations for enhanced UX */
+@keyframes slide-in-from-left {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-in-from-right {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-in-from-bottom {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-in {
+    animation-fill-mode: both;
+}
+
+.slide-in-from-left {
+    animation-name: slide-in-from-left;
+}
+
+.slide-in-from-right {
+    animation-name: slide-in-from-right;
+}
+
+.slide-in-from-bottom {
+    animation-name: slide-in-from-bottom;
+}
+
+.fade-in {
+    animation-name: fade-in;
+}
+
+.duration-300 {
+    animation-duration: 300ms;
+}
+
+.duration-500 {
+    animation-duration: 500ms;
+}
+
+.duration-700 {
+    animation-duration: 700ms;
+}
+/* Login/Signup Double Slider Styles */
+.login-container {
+background-color: #fff;
+border-radius: 10px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 
+0 10px 10px rgba(0,0,0,0.22);
+position: relative;
+overflow: hidden;
+width: 768px;
+max-width: 100%;
+min-height: 480px;
+}
+
+.dark .login-container {
+    background-color: hsl(var(--card));
+    box-shadow: 0 14px 28px rgba(0,0,0,0.5), 
+0 10px 10px rgba(0,0,0,0.4);
+}
+
+.form-container {
+position: absolute;
+top: 0;
+height: 100%;
+transition: all 0.6s ease-in-out;
+}
+
+.sign-in-container {
+left: 0;
+width: 50%;
+z-index: 2;
+}
+
+.login-container.right-panel-active .sign-in-container {
+transform: translateX(100%);
+}
+
+.sign-up-container {
+left: 0;
+width: 50%;
+opacity: 0;
+z-index: 1;
+}
+
+.login-container.right-panel-active .sign-up-container {
+transform: translateX(100%);
+opacity: 1;
+z-index: 5;
+animation: show 0.6s;
+}
+
+@keyframes show {
+0%, 49.99% {
+opacity: 0;
+z-index: 1;
+}
+
+50%, 100% {
+opacity: 1;
+z-index: 5;
+}
+}
+
+.overlay-container {
+position: absolute;
+top: 0;
+left: 50%;
+width: 50%;
+height: 100%;
+overflow: hidden;
+transition: transform 0.6s ease-in-out;
+z-index: 100;
+}
+
+.login-container.right-panel-active .overlay-container{
+transform: translateX(-100%);
+}
+
+.overlay {
+background: #FF416C;
+background: -webkit-linear-gradient(to right, #3b82f6, #8b5cf6);
+background: linear-gradient(to right, #3b82f6, #8b5cf6);
+background-repeat: no-repeat;
+background-size: cover;
+background-position: 0 0;
+color: #FFFFFF;
+position: relative;
+left: -100%;
+height: 100%;
+width: 200%;
+  transform: translateX(0);
+transition: transform 0.6s ease-in-out;
+}
+
+.login-container.right-panel-active .overlay {
+  transform: translateX(50%);
+}
+
+.overlay-panel {
+position: absolute;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-direction: column;
+padding: 0 40px;
+text-align: center;
+top: 0;
+height: 100%;
+width: 50%;
+transform: translateX(0);
+transition: transform 0.6s ease-in-out;
+}
+
+.overlay-left {
+transform: translateX(-20%);
+}
+
+.login-container.right-panel-active .overlay-left {
+transform: translateX(0);
+}
+
+.overlay-right {
+right: 0;
+transform: translateX(0);
+}
+
+.login-container.right-panel-active .overlay-right {
+transform: translateX(20%);
+}
+
+.social-container {
+margin: 20px 0;
+}
+
+.social-container a {
+border: 1px solid #DDDDDD;
+border-radius: 50%;
+display: inline-flex;
+justify-content: center;
+align-items: center;
+margin: 0 5px;
+height: 40px;
+width: 40px;
+}
+
+.dark .social-container a {
+    border-color: #333;
+}
