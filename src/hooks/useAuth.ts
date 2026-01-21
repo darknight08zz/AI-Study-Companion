@@ -19,7 +19,7 @@ export const useAuth = create<AuthState>((set) => ({
 
     login: async (email: string, password?: string, isSignUp?: boolean, name?: string) => {
         if (!email || !password) {
-            alert("Please enter both email and password");
+            alert("Please provide both email and password.");
             return;
         }
 
@@ -35,7 +35,7 @@ export const useAuth = create<AuthState>((set) => ({
                 }
             });
             if (error) {
-                alert("Sign up failed: " + error.message);
+                alert(`Sign up failed: ${error.message}. Please check your connection and try again.`);
             } else {
                 // If we have a session/user and a name, try to create the profile immediately
                 if (data.user && data.session && name) {
@@ -59,7 +59,7 @@ export const useAuth = create<AuthState>((set) => ({
                 password,
             });
             if (error) {
-                alert("Login failed: " + error.message);
+                alert(`Login failed: ${error.message}. Please check your credentials.`);
             }
         }
     },
@@ -97,6 +97,9 @@ export const useAuth = create<AuthState>((set) => ({
 useAuth.getState().checkSession();
 
 // Compatibility hook for existing code using 'identity'
+/**
+ * @deprecated Use useAuth() directly instead. This adapter is for backward compatibility.
+ */
 export function useInternetIdentity() {
     const { isAuthenticated, user, login, logout, isInitializing } = useAuth();
 

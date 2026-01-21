@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useInternetIdentity } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
+import { isConfigured } from '../services/supabaseClient';
 import { Button } from '@/components/ui/button';
-import { Github, Linkedin, Mail } from 'lucide-react';
+import { Github, Linkedin, Mail, AlertTriangle } from 'lucide-react';
 
 interface LoginScreenProps {
     initialSignUp?: boolean;
@@ -9,7 +10,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ initialSignUp = false, onBack }: LoginScreenProps) {
-    const { login } = useInternetIdentity();
+    const { login } = useAuth();
     const [isRightPanelActive, setIsRightPanelActive] = useState(initialSignUp);
 
     // Form states
@@ -39,6 +40,16 @@ export default function LoginScreen({ initialSignUp = false, onBack }: LoginScre
                 >
                     ← Back to Home
                 </Button>
+            )}
+
+            {!isConfigured && (
+                <div className="absolute top-16 left-4 z-50 bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-md flex items-center gap-3 backdrop-blur-md shadow-sm max-w-md animate-in fade-in slide-in-from-top-2">
+                    <AlertTriangle className="h-5 w-5 shrink-0" />
+                    <div>
+                        <p className="font-bold text-sm">Configuration Error</p>
+                        <p className="text-xs opacity-90">Supabase environment variables are missing. Please check your Vercel settings.</p>
+                    </div>
+                </div>
             )}
             <div className={`login-container ${isRightPanelActive ? "right-panel-active" : ""}`} id="container">
                 {/* Sign Up Container */}
@@ -72,10 +83,21 @@ export default function LoginScreen({ initialSignUp = false, onBack }: LoginScre
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
-                        <Button className="mt-4 rounded-full px-12 py-3 font-bold uppercase tracking-wider text-xs shadow-lg hover:shadow-primary/50 transition-all">
+                        <Button
+                            className="mt-4 rounded-full px-12 py-3 font-bold uppercase tracking-wider text-xs shadow-lg hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!isConfigured}
+                        >
                             Sign Up
-
                         </Button>
+                        <p className="mt-4 text-sm text-muted-foreground md:hidden">
+                            Already have an account?{" "}
+                            <span
+                                className="text-primary font-bold cursor-pointer hover:underline"
+                                onClick={() => setIsRightPanelActive(false)}
+                            >
+                                Sign In
+                            </span>
+                        </p>
                     </form>
                 </div>
 
@@ -104,9 +126,21 @@ export default function LoginScreen({ initialSignUp = false, onBack }: LoginScre
                             onChange={(e) => setPassword(e.target.value)}
                         />
                         <a href="#" className="text-foreground text-sm my-4 hover:underline">Forgot your password?</a>
-                        <Button className="mt-2 rounded-full px-12 py-3 font-bold uppercase tracking-wider text-xs shadow-lg hover:shadow-primary/50 transition-all">
+                        <Button
+                            className="mt-2 rounded-full px-12 py-3 font-bold uppercase tracking-wider text-xs shadow-lg hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!isConfigured}
+                        >
                             Sign In
                         </Button>
+                        <p className="mt-4 text-sm text-muted-foreground md:hidden">
+                            Don't have an account?{" "}
+                            <span
+                                className="text-primary font-bold cursor-pointer hover:underline"
+                                onClick={() => setIsRightPanelActive(true)}
+                            >
+                                Sign Up
+                            </span>
+                        </p>
                     </form>
                 </div>
 

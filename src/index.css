@@ -305,6 +305,63 @@ height: 40px;
 width: 40px;
 }
 
+
 .dark .social-container a {
     border-color: #333;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .login-container {
+        width: 90%;
+        min-height: auto;
+        height: auto;
+        border-radius: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.35);
+        display: flex;
+        flex-direction: column;
+        overflow: visible; /* Allow content to flow */
+    }
+
+    .form-container {
+        position: relative;
+        width: 100%;
+        height: auto;
+        transition: none;
+        padding: 20px 0;
+    }
+
+    .sign-in-container {
+        transform: none !important;
+        display: block;
+    }
+
+    .sign-up-container {
+        transform: none !important;
+        opacity: 1;
+        z-index: 1;
+        display: none;
+    }
+
+    /* When "right panel active" (Sign Up Mode) */
+    .login-container.right-panel-active .sign-in-container {
+        display: none;
+    }
+
+    .login-container.right-panel-active .sign-up-container {
+        display: block;
+        animation: fade-in 0.5s;
+    }
+
+    .overlay-container {
+        display: none;
+    }
+    
+    .social-container {
+        margin: 10px 0;
+    }
+    
+    form {
+        padding: 0 20px;
+    }
 }
