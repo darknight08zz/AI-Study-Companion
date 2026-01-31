@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useInternetIdentity } from './hooks/useAuth';
 import { useGetCallerUserProfile } from './hooks/useQueries';
 import { ThemeProvider } from 'next-themes';
@@ -70,16 +71,20 @@ export default function App() {
         );
     }
 
+    const [activeTab, setActiveTab] = useState('overview');
+
     return (
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <div className="flex min-h-screen flex-col bg-background">
-                <Header />
-                <main className="flex-1">
-                    <Dashboard />
-                </main>
-                <Footer />
-            </div>
-            <Toaster />
+            <ErrorBoundary>
+                <div className="flex min-h-screen flex-col bg-background">
+                    <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <main className="flex-1">
+                        <Dashboard activeTab={activeTab} setActiveTab={setActiveTab} />
+                    </main>
+                    <Footer />
+                </div>
+                <Toaster />
+            </ErrorBoundary>
         </ThemeProvider>
     );
 }

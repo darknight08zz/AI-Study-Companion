@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { databaseService } from '../services/database';
+import { indexedDBService } from '../services/indexedDB';
 import type {
     UserProfile,
     StudyTask,
@@ -207,13 +208,30 @@ export function useUploadMaterial() {
     });
 }
 
+
+
+// ... existing code ...
+
 // Fallback for PDF blob (store as text for now or extend DB service later)
 export function useUploadPdfWithBlob() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (params: { title: string; content: string; pdfBlob: any }) => {
-            return databaseService.uploadMaterial(params.title, params.content, 'pdf');
+            // 1. Save metadata and extracted text to Supabase
+            const id = await databaseService.uploadMaterial(params.title, params.content, 'pdf');
+
+            // 2. Save original PDF Blob to IndexedDB for offline access/viewing
+            try {
+                if (params.pdfBlob) {
+                    await indexedDBService.saveFile(id, params.pdfBlob as Blob);
+                }
+            } catch (e) {
+                console.error("Failed to save PDF blob to IndexedDB", e);
+                // Non-fatal, we continue since we have the text
+            }
+
+            return id;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['materials'] });
@@ -226,7 +244,12 @@ export function useDeleteMaterial() {
 
     return useMutation({
         mutationFn: async (id: string) => {
-            return databaseService.deleteMaterial(id);
+            await databaseService.deleteMaterial(id);
+            try {
+                await indexedDBService.deleteFile(id);
+            } catch (e) {
+                console.error("Failed to delete PDF blob from IndexedDB", e);
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['materials'] });

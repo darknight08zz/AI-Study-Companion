@@ -20,6 +20,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
     // Profile State
     const [displayName, setDisplayName] = useState('');
+    const [aiPersona, setAiPersona] = useState('friendly');
 
     // Password State
     const [newPassword, setNewPassword] = useState('');
@@ -30,6 +31,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     useEffect(() => {
         if (userProfile && open) {
             setDisplayName(userProfile.name || '');
+            setAiPersona(userProfile.aiPersona || 'friendly');
             setNewPassword('');
             setConfirmPassword('');
         }
@@ -41,7 +43,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         try {
             await saveProfileMutation.mutateAsync({
                 ...userProfile,
-                name: displayName
+                name: displayName,
+                aiPersona: aiPersona
             });
             toast.success("Profile updated successfully");
         } catch (error) {
@@ -84,8 +87,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
+                        <TabsTrigger value="preferences">Preferences</TabsTrigger>
                         <TabsTrigger value="account">Account</TabsTrigger>
                     </TabsList>
 
@@ -101,6 +105,35 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </div>
                         <Button onClick={handleSaveProfile} disabled={saveProfileMutation.isPending}>
                             {saveProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </TabsContent>
+
+                    <TabsContent value="preferences" className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>AI Persona</Label>
+                            <div className="grid grid-cols-1 gap-2">
+                                {[
+                                    { id: 'friendly', name: 'Friendly Helper', desc: 'Encouraging and supportive' },
+                                    { id: 'strict', name: 'Strict Tutor', desc: 'Direct and disciplined' },
+                                    { id: 'concise', name: 'Concise Expert', desc: 'To the point and technical' },
+                                    { id: 'socratic', name: 'Socratic Guide', desc: 'Asks questions to lead you' }
+                                ].map((persona) => (
+                                    <div
+                                        key={persona.id}
+                                        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all hover:bg-accent ${aiPersona === persona.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : ''
+                                            }`}
+                                        onClick={() => setAiPersona(persona.id)}
+                                    >
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium">{persona.name}</span>
+                                            <span className="text-xs text-muted-foreground">{persona.desc}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <Button onClick={handleSaveProfile} disabled={saveProfileMutation.isPending}>
+                            {saveProfileMutation.isPending ? "Saving..." : "Save Preferences"}
                         </Button>
                     </TabsContent>
 

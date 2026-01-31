@@ -15,7 +15,12 @@ import {
 import { SettingsDialog } from './SettingsDialog';
 import { useState } from 'react';
 
-export default function Header() {
+interface HeaderProps {
+    activeTab: string;
+    setActiveTab: (tab: string) => void;
+}
+
+export default function Header({ activeTab, setActiveTab }: HeaderProps) {
     const { logout, identity } = useInternetIdentity();
     const { data: userProfile } = useGetCallerUserProfile();
     const queryClient = useQueryClient();
@@ -37,20 +42,40 @@ export default function Header() {
             .slice(0, 2);
     };
 
+    const navItems = [
+        { id: 'overview', label: 'Home' },
+        { id: 'library', label: 'Library' },
+        { id: 'planner', label: 'Planner' },
+        { id: 'quiz', label: 'Quiz' },
+        { id: 'flashcards', label: 'Flashcards' },
+        { id: 'progress', label: 'Progress' },
+    ];
+
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent">
-                        <BookOpen className="h-6 w-6 text-primary-foreground" />
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('overview')}>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <BookOpen className="h-6 w-6 text-primary" />
                     </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold">AI Study Companion</h1>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Your personal learning assistant</p>
-                    </div>
+                    <span className="text-xl font-bold hidden md:inline-block">AI Companion</span>
                 </div>
+
+                {/* Box Flex Navigation - Top Center */}
+                <nav className="hidden md:flex items-center gap-6">
+                    {navItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id)}
+                            className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === item.id
+                                    ? 'text-primary font-semibold'
+                                    : 'text-muted-foreground'
+                                }`}
+                        >
+                            {item.label}
+                        </button>
+                    ))}
+                </nav>
 
                 <div className="flex items-center gap-3">
                     <Button
@@ -67,7 +92,7 @@ export default function Header() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                                 <Avatar>
-                                    <AvatarFallback className="bg-primary text-primary-foreground">
+                                    <AvatarFallback className="bg-primary/10 text-primary">
                                         {userProfile?.name ? getInitials(userProfile.name) : '?'}
                                     </AvatarFallback>
                                 </Avatar>

@@ -20,6 +20,7 @@ export interface UserProfile {
     level: number;
     dailyStreak: number;
     lastActivityDate: number;
+    aiPersona?: string;
 }
 
 export interface UploadedMaterial {
@@ -114,7 +115,8 @@ class DatabaseService {
             xp: data.xp,
             level: data.level,
             dailyStreak: data.daily_streak,
-            lastActivityDate: data.last_activity_date
+            lastActivityDate: data.last_activity_date,
+            aiPersona: data.ai_persona // Read from DB
         };
     }
 
@@ -128,7 +130,8 @@ class DatabaseService {
             xp: profile.xp,
             level: profile.level,
             daily_streak: profile.dailyStreak,
-            last_activity_date: profile.lastActivityDate
+            last_activity_date: profile.lastActivityDate,
+            ai_persona: profile.aiPersona
         };
 
         if (profile.email) {

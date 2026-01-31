@@ -10,20 +10,29 @@ export interface GeneratedQuestion {
 }
 
 export const generateQuizFromContent = async (content: string, difficulty: 'easy' | 'medium' | 'hard' = 'medium'): Promise<GeneratedQuestion[]> => {
-    const prompt = `Generate 5 multiple-choice questions based on the following text. The difficulty should be ${difficulty}.
+    const prompt = `You are an expert tutor. Create a ${difficulty} difficulty quiz with 5 multiple-choice questions based strictly on the provided text.
     
-    Return the response strictly as a JSON array of objects with the following structure:
+    Guidelines:
+    1. Questions should test understanding, not just recall.
+    2. Options (A, B, C, D) must be unique.
+    3. The "correctAnswer" index must be correct (0=A, 1=B, 2=C, 3=D).
+    4. Distractors (wrong answers) should be plausible but clearly incorrect.
+    
+    Output Format:
+    Return ONLY a raw JSON array (no markdown, no backticks).
+    Structure:
     [
         {
             "id": 1,
-            "question": "Question text",
+            "question": "Question text?",
             "options": ["Option A", "Option B", "Option C", "Option D"],
-            "correctAnswer": 0, // Index of the correct option (0-3)
-            "explanation": "Explanation of why this is correct"
+            "correctAnswer": 0,
+            "explanation": "Brief explanation."
         }
     ]
 
-    Text: ${content.substring(0, 20000)}`;
+    Text Content:
+    ${content.substring(0, 25000)}`;
 
     try {
         const result = await generateContent(prompt);

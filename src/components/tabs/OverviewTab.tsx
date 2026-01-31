@@ -198,244 +198,192 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
     return (
         <TooltipProvider>
             <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border/50">
+                {/* Header Section */}
+                <div className="flex items-center justify-between pb-2">
                     <div>
-                        <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Welcome back!</h2>
-                        <p className="text-muted-foreground mt-2 text-lg">Here's an overview of your study progress</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h2>
+                        <p className="text-muted-foreground">Welcome back to your study space</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Button onClick={() => onNavigate?.('planner')} className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all rounded-full px-6">
-                            <PlusCircle className="h-4 w-4" />
-                            New Task
-                        </Button>
-                        <Button variant="outline" onClick={() => onNavigate?.('quiz')} className="gap-2 rounded-full px-6 border-primary/20 hover:bg-primary/5">
-                            <PlayCircle className="h-4 w-4" />
-                            Start Quiz
-                        </Button>
-                        <Button variant="outline" onClick={() => onNavigate?.('library')} className="gap-2 rounded-full px-6 border-primary/20 hover:bg-primary/5">
-                            <FileText className="h-4 w-4" />
-                            Add Materials
-                        </Button>
+                    <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </div>
                 </div>
 
-                {/* AI Study Insights */}
-                {insights.length > 0 && (
-                    <div className="space-y-3">
-                        {insights.map((insight, index) => {
-                            const Icon = insight.icon;
-                            return (
-                                <Alert
-                                    key={index}
-                                    className={`animate-in slide-in-from-left duration-500 border-l-4 ${insight.type === 'positive'
-                                        ? 'border-l-green-500 bg-green-500/5'
-                                        : insight.type === 'warning'
-                                            ? 'border-l-yellow-500 bg-yellow-500/5'
-                                            : 'border-l-primary bg-primary/5'
-                                        }`}
-                                    style={{ animationDelay: `${index * 100}ms` }}
-                                >
-                                    <Icon className="h-4 w-4" />
-                                    <AlertDescription className="ml-2">{insight.message}</AlertDescription>
-                                </Alert>
-                            );
-                        })}
+                {/* Main Bento Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+                    {/* Row 1: Hero/Actions (8 cols) + Progress (4 cols) */}
+                    <div className="md:col-span-8 grid gap-6">
+                        {/* Quick Actions Hero */}
+                        <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-10 opacity-10">
+                                <Sparkles className="w-40 h-40 text-primary" />
+                            </div>
+                            <CardHeader className="relative z-10">
+                                <CardTitle className="text-2xl">Ready to learn?</CardTitle>
+                                <CardDescription className="text-base">
+                                    You have <span className="font-semibold text-foreground">{inProgressTasks} active tasks</span> and <span className="font-semibold text-foreground">{notStartedTasks} pending</span>.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="relative z-10 flex flex-wrap gap-4">
+                                <Button onClick={() => onNavigate?.('planner')} className="gap-2 shadow-md hover:shadow-lg transition-all">
+                                    <PlusCircle className="h-4 w-4" />
+                                    New Task
+                                </Button>
+                                <Button variant="secondary" onClick={() => onNavigate?.('quiz')} className="gap-2 bg-background/50 hover:bg-background/80">
+                                    <PlayCircle className="h-4 w-4" />
+                                    Take Quiz
+                                </Button>
+                                <Button variant="outline" onClick={() => onNavigate?.('library')} className="gap-2 bg-transparent">
+                                    <FileText className="h-4 w-4" />
+                                    Library
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Stats Row (Nested Grid) */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <Card className="hover:bg-accent/50 transition-colors">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+                                    <ListTodo className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{totalTasks}</div>
+                                    <p className="text-xs text-muted-foreground">{completedTasks} completed</p>
+                                </CardContent>
+                            </Card>
+                            <Card className="hover:bg-accent/50 transition-colors">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Avg Score</CardTitle>
+                                    <Trophy className="h-4 w-4 text-yellow-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{averageScore.toFixed(0)}%</div>
+                                    <p className="text-xs text-muted-foreground">{totalQuizzes} quizzes</p>
+                                </CardContent>
+                            </Card>
+                            <Card className="md:col-span-1 col-span-2 hover:bg-accent/50 transition-colors">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                                    <Clock className="h-4 w-4 text-blue-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{inProgressTasks}</div>
+                                    <p className="text-xs text-muted-foreground">Focus mode</p>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
-                )}
 
-                {/* Stats Grid */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Card className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer border-primary/10 bg-gradient-to-br from-card to-card/50">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-muted-foreground">Total Tasks</CardTitle>
-                                    <div className="p-2 rounded-full bg-blue-500/10 text-blue-500">
-                                        <ListTodo className="h-4 w-4" />
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold">{totalTasks}</div>
-                                    <p className="text-xs text-muted-foreground mt-1">{completedTasks} completed</p>
-                                </CardContent>
-                            </Card>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Total number of study tasks you've created</p>
-                        </TooltipContent>
-                    </Tooltip>
+                    {/* Completion Ring / Summary (4 cols) */}
+                    <Card className="md:col-span-4 flex flex-col justify-center items-center p-6 bg-card/50 backdrop-blur-sm border-border/60">
+                        <div className="relative flex items-center justify-center w-40 h-40">
+                            {/* Simple CSS-only Circular Progress placeholder - Recharts PieChart would be better but keeping it simple/robust for now */}
+                            <svg className="w-full h-full transform -rotate-90">
+                                <circle
+                                    className="text-muted/20"
+                                    strokeWidth="10"
+                                    stroke="currentColor"
+                                    fill="transparent"
+                                    r="70"
+                                    cx="80"
+                                    cy="80"
+                                />
+                                <circle
+                                    className="text-primary transition-all duration-1000 ease-out"
+                                    strokeWidth="10"
+                                    strokeDasharray={440}
+                                    strokeDashoffset={440 - (440 * completionRate) / 100}
+                                    strokeLinecap="round"
+                                    stroke="currentColor"
+                                    fill="transparent"
+                                    r="70"
+                                    cx="80"
+                                    cy="80"
+                                />
+                            </svg>
+                            <div className="absolute flex flex-col items-center">
+                                <span className="text-3xl font-bold">{completionRate.toFixed(0)}%</span>
+                                <span className="text-xs text-muted-foreground uppercase tracking-wider">Complete</span>
+                            </div>
+                        </div>
+                        <div className="mt-6 w-full space-y-2">
+                            {insights.slice(0, 2).map((insight, i) => (
+                                <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/30 p-2 rounded">
+                                    <insight.icon className={`h-4 w-4 shrink-0 ${insight.type === 'positive' ? 'text-green-500' : 'text-primary'}`} />
+                                    <span>{insight.message}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
 
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Card className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer border-primary/10 bg-gradient-to-br from-card to-card/50">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
-                                    <div className="p-2 rounded-full bg-green-500/10 text-green-500">
-                                        <CheckCircle2 className="h-4 w-4" />
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold">{completionRate.toFixed(0)}%</div>
-                                    <Progress value={completionRate} className="mt-2 h-1.5" />
-                                </CardContent>
-                            </Card>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Percentage of tasks you've completed</p>
-                        </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Card className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer border-primary/10 bg-gradient-to-br from-card to-card/50">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-muted-foreground">Quizzes Taken</CardTitle>
-                                    <div className="p-2 rounded-full bg-yellow-500/10 text-yellow-500">
-                                        <Trophy className="h-4 w-4" />
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold">{totalQuizzes}</div>
-                                    <p className="text-xs text-muted-foreground mt-1">Avg: {averageScore.toFixed(0)}%</p>
-                                </CardContent>
-                            </Card>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Total quizzes completed and your average score</p>
-                        </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Card className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer border-primary/10 bg-gradient-to-br from-card to-card/50">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
-                                    <div className="p-2 rounded-full bg-purple-500/10 text-purple-500">
-                                        <Clock className="h-4 w-4" />
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold">{inProgressTasks}</div>
-                                    <p className="text-xs text-muted-foreground mt-1">{notStartedTasks} not started</p>
-                                </CardContent>
-                            </Card>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Tasks currently in progress and pending tasks</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </div>
-
-                {/* Smart Study Recommendations */}
-                {recommendations.length > 0 && (
-                    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+                    {/* Row 2: Upcoming (7 cols) + Recommendations (5 cols) */}
+                    <Card className="md:col-span-7 h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Sparkles className="h-5 w-5 text-primary" />
-                                Smart Study Recommendations
+                                <Calendar className="h-5 w-5" />
+                                Upcoming Tasks
                             </CardTitle>
-                            <CardDescription>AI-powered suggestions based on your progress</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {recommendations.map((rec, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-start gap-4 rounded-lg border bg-card p-4 transition-all hover:shadow-md animate-in slide-in-from-bottom duration-500"
-                                        style={{ animationDelay: `${index * 100}ms` }}
-                                    >
-                                        <div
-                                            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${rec.priority === 'high'
-                                                ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                                : rec.priority === 'medium'
-                                                    ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-                                                    : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                                }`}
-                                        >
-                                            <Target className="h-5 w-5" />
-                                        </div>
-                                        <div className="flex-1 space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-semibold">{rec.title}</h4>
-                                                <Badge
-                                                    variant={rec.priority === 'high' ? 'destructive' : 'secondary'}
-                                                    className="text-xs"
-                                                >
-                                                    {rec.priority}
-                                                </Badge>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground">{rec.description}</p>
-                                            {rec.subjects.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 pt-1">
-                                                    {rec.subjects.map((subject) => (
-                                                        <Badge key={subject} variant="outline" className="text-xs">
-                                                            {subject}
-                                                        </Badge>
-                                                    ))}
+                                {upcomingTasks.length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground">No upcoming tasks</div>
+                                ) : (
+                                    upcomingTasks.map((task) => (
+                                        <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-accent/50 transition-all group">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-1 h-10 rounded-full ${task.status === TaskStatusEnum.inProgress ? 'bg-primary' : 'bg-muted'}`} />
+                                                <div>
+                                                    <p className="font-medium">{task.title}</p>
+                                                    <div className="flex gap-2 mt-1">
+                                                        {task.subjectTags.slice(0, 2).map(tag => (
+                                                            <Badge key={tag} variant="secondary" className="text-[10px] px-1 py-0 h-5">{tag}</Badge>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            )}
+                                            </div>
+                                            <div className="text-right text-xs text-muted-foreground">
+                                                {new Date(Number(task.dueDate) / 1000000).toLocaleDateString()}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </CardContent>
                     </Card>
-                )}
 
-                {/* Upcoming Tasks */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Calendar className="h-5 w-5" />
-                            Upcoming Tasks
-                        </CardTitle>
-                        <CardDescription>Your next tasks to focus on</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {upcomingTasks.length === 0 ? (
-                            <p className="text-center text-muted-foreground py-8">
-                                No upcoming tasks. Create one to get started!
-                            </p>
-                        ) : (
-                            <div className="space-y-4">
-                                {upcomingTasks.map((task, index) => (
-                                    <div
-                                        key={task.id}
-                                        className="flex items-start justify-between gap-4 rounded-lg border p-4 transition-all hover:shadow-md hover:border-primary/50 animate-in slide-in-from-right duration-500"
-                                        style={{ animationDelay: `${index * 100}ms` }}
-                                    >
-                                        <div className="flex-1 space-y-1">
-                                            <h4 className="font-semibold">{task.title}</h4>
-                                            <p className="text-sm text-muted-foreground line-clamp-1">
-                                                {task.description}
-                                            </p>
-                                            <div className="flex flex-wrap gap-2 pt-1">
-                                                {task.subjectTags.map((tag) => (
-                                                    <Badge key={tag} variant="secondary" className="text-xs">
-                                                        {tag}
-                                                    </Badge>
-                                                ))}
-                                            </div>
+                    <Card className="md:col-span-5 h-full relative overflow-hidden bg-gradient-to-tr from-accent/5 to-transparent">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Target className="h-5 w-5" />
+                                Smart Suggestions
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {recommendations.slice(0, 3).map((rec, i) => (
+                                    <div key={i} className="p-3 rounded-lg bg-background/80 border shadow-sm text-sm">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="font-medium text-foreground">{rec.title}</span>
+                                            <Badge variant={rec.priority === 'high' ? 'destructive' : 'outline'} className="text-[10px] h-5">{rec.priority}</Badge>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-medium">
-                                                {new Date(Number(task.dueDate) / 1000000).toLocaleDateString()}
-                                            </p>
-                                            <Badge
-                                                variant={
-                                                    task.status === TaskStatusEnum.inProgress ? 'default' : 'outline'
-                                                }
-                                                className="mt-1"
-                                            >
-                                                {task.status === TaskStatusEnum.inProgress ? 'In Progress' : 'Not Started'}
-                                            </Badge>
-                                        </div>
+                                        <p className="text-muted-foreground text-xs leading-relaxed">{rec.description}</p>
+                                        <Button variant="link" className="p-0 h-auto text-xs mt-2 text-primary" onClick={() => onNavigate?.('planner')}>
+                                            {rec.action} -&gt;
+                                        </Button>
                                     </div>
                                 ))}
+                                {recommendations.length === 0 && (
+                                    <div className="text-center py-6 text-muted-foreground text-sm">
+                                        No recommendations right now. Keep studying!
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </TooltipProvider>
     );
