@@ -42,6 +42,7 @@ export const useAuth = create<AuthState>((set) => ({
                     try {
                         await databaseService.saveCallerUserProfile({
                             name: name,
+                            email: email, // Save email
                             xp: 0,
                             level: 1,
                             dailyStreak: 0,

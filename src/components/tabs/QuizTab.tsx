@@ -77,7 +77,8 @@ export default function QuizTab() {
         setShowResults(false);
     };
 
-    const handleGenerateQuiz = () => {
+
+    const handleGenerateQuiz = async () => {
         if (!selectedMaterialId) {
             toast.error('Please select a study material first');
             return;
@@ -88,7 +89,7 @@ export default function QuizTab() {
 
         setIsGenerating(true);
         try {
-            const generatedQuestions = generateQuizFromContent(material.content);
+            const generatedQuestions = await generateQuizFromContent(material.content);
             setQuestions(generatedQuestions);
             setSelectedAnswers(new Array(generatedQuestions.length).fill(null));
             setQuizStarted(true);
@@ -102,6 +103,7 @@ export default function QuizTab() {
             setIsGenerating(false);
         }
     };
+
 
     const handleAnswerSelect = (answerIndex: number) => {
         const newAnswers = [...selectedAnswers];

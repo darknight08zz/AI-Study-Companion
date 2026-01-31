@@ -19,7 +19,8 @@ export default function FlashcardsTab() {
     const [studySessionActive, setStudySessionActive] = useState(false);
     const [knownCards, setKnownCards] = useState<Set<string>>(new Set());
 
-    const handleGenerate = () => {
+
+    const handleGenerate = async () => {
         if (!selectedMaterialId) return;
 
         const material = materials.find(m => m.id === selectedMaterialId);
@@ -27,7 +28,7 @@ export default function FlashcardsTab() {
 
         setIsGenerating(true);
         try {
-            const cards = generateFlashcardsFromContent(material.content);
+            const cards = await generateFlashcardsFromContent(material.content);
             if (cards.length === 0) {
                 toast.error('Could not generate flashcards from this content. Try a different text.');
             } else {
@@ -45,6 +46,7 @@ export default function FlashcardsTab() {
             setIsGenerating(false);
         }
     };
+
 
     const handleExport = () => {
         if (flashcards.length === 0) return;

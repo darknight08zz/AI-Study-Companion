@@ -15,6 +15,7 @@ export interface StudyTask {
 
 export interface UserProfile {
     name: string;
+    email?: string;
     xp: number;
     level: number;
     dailyStreak: number;
@@ -109,6 +110,7 @@ class DatabaseService {
 
         return {
             name: data.display_name,
+            email: data.email,
             xp: data.xp,
             level: data.level,
             dailyStreak: data.daily_streak,
@@ -120,16 +122,22 @@ class DatabaseService {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        const updateData: any = {
+            id: user.id,
+            display_name: profile.name,
+            xp: profile.xp,
+            level: profile.level,
+            daily_streak: profile.dailyStreak,
+            last_activity_date: profile.lastActivityDate
+        };
+
+        if (profile.email) {
+            updateData.email = profile.email;
+        }
+
         await supabase
             .from('profiles')
-            .upsert({
-                id: user.id,
-                display_name: profile.name,
-                xp: profile.xp,
-                level: profile.level,
-                daily_streak: profile.dailyStreak,
-                last_activity_date: profile.lastActivityDate
-            });
+            .upsert(updateData);
     }
 
     async addXp(amount: number): Promise<{ newLevel: number; leveledUp: boolean }> {

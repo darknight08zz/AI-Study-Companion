@@ -88,6 +88,21 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- 7. Update for Email Support (Run this if you already created tables info)
+-- Add email column to profiles
+alter table profiles add column if not exists email text;
+
+-- Update the trigger function to capture email as well
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, display_name, email)
+  values (new.id, new.raw_user_meta_data->>'full_name', new.email);
+  return new;
+end;
+$$ language plpgsql security definer;
+
 ```
 
 ### 4. Connect Config

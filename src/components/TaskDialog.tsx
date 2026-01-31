@@ -41,7 +41,7 @@ export default function TaskDialog({ open, onOpenChange, mode, task }: TaskDialo
         if (mode === 'edit' && task) {
             setTitle(task.title);
             setDescription(task.description);
-            setDueDate(new Date(Number(task.dueDate) / 1000000).toISOString().split('T')[0]);
+            setDueDate(new Date(task.dueDate).toISOString().split('T')[0]);
             setTags(task.subjectTags);
             setStatus(task.status);
         } else {
@@ -73,14 +73,14 @@ export default function TaskDialog({ open, onOpenChange, mode, task }: TaskDialo
             return;
         }
 
-        const dueDateNanos = BigInt(new Date(dueDate).getTime()) * BigInt(1000000);
+        const dueDateMs = new Date(dueDate).getTime();
 
         try {
             if (mode === 'create') {
                 await createTask.mutateAsync({
                     title: title.trim(),
                     description: description.trim(),
-                    dueDate: dueDateNanos,
+                    dueDate: dueDateMs,
                     subjectTags: tags,
                 });
                 toast.success('Task created successfully');
@@ -89,7 +89,7 @@ export default function TaskDialog({ open, onOpenChange, mode, task }: TaskDialo
                     id: task.id,
                     title: title.trim(),
                     description: description.trim(),
-                    dueDate: dueDateNanos,
+                    dueDate: dueDateMs,
                     subjectTags: tags,
                     status,
                 });

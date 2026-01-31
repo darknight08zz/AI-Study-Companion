@@ -137,8 +137,8 @@ export default function PlannerTab() {
         return task.status === statusFilter;
     });
 
-    const formatDate = (timestamp: bigint) => {
-        const date = new Date(Number(timestamp) / 1000000);
+    const formatDate = (timestamp: number) => {
+        const date = new Date(timestamp);
         return date.toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
@@ -375,7 +375,7 @@ export default function PlannerTab() {
                         </h3>
                         {(() => {
                             const dateTasks = tasks.filter(t => {
-                                const d = new Date(Number(t.dueDate) / 1000000);
+                                const d = new Date(t.dueDate);
                                 return selectedDate &&
                                     d.getDate() === selectedDate.getDate() &&
                                     d.getMonth() === selectedDate.getMonth() &&

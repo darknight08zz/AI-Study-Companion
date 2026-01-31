@@ -245,24 +245,24 @@ export default function LibraryTab() {
         }
     };
 
+
     const handleSummarize = async (material: UploadedMaterial) => {
         setSummaryMaterial(material);
         setIsSummarizing(true);
         setSummaryText('');
 
-        // Simulate async processing
-        setTimeout(() => {
-            try {
-                const summary = generateSummary(material.content);
-                setSummaryText(summary);
-                setIsSummarizing(false);
-            } catch (e) {
-                toast.error("Failed to generate summary");
-                setIsSummarizing(false);
-                setSummaryMaterial(null);
-            }
-        }, 1000);
+        try {
+            const summary = await generateSummary(material.content);
+            setSummaryText(summary);
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to generate summary");
+            setSummaryMaterial(null);
+        } finally {
+            setIsSummarizing(false);
+        }
     };
+
 
     const extractTopicsFromContent = (content: string): Topic[] => {
         const lines = content.split('\n').filter(line => line.trim().length > 0);

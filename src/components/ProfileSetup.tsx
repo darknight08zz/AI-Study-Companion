@@ -30,6 +30,7 @@ export default function ProfileSetup() {
         try {
             await saveProfile.mutateAsync({
                 name: name.trim(),
+                email: user?.email, // Save email from auth user
                 xp: 0,
                 level: 1,
                 dailyStreak: 0,

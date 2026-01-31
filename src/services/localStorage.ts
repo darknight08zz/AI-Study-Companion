@@ -41,7 +41,7 @@ export interface StudyTask {
     id: string;
     title: string;
     description: string;
-    dueDate: bigint;
+    dueDate: number;
     subjectTags: string[];
     status: TaskStatus;
     owner: string;
@@ -49,10 +49,10 @@ export interface StudyTask {
 
 export interface UserProfile {
     name: string;
-    xp: bigint;
+    xp: number;
     level: number;
     dailyStreak: number;
-    lastActivityDate: bigint; // Timestamp
+    lastActivityDate: number; // Timestamp
 }
 
 export interface UploadedMaterial {
@@ -60,16 +60,16 @@ export interface UploadedMaterial {
     title: string;
     content: string;
     owner: string;
-    createdAt: bigint;
+    createdAt: number;
     fileType: FileType;
     originalFile?: any; // Simulating ExternalBlob
 }
 
 export interface QuizResult {
     id: string;
-    score: bigint;
-    totalQuestions: bigint;
-    timestamp: bigint;
+    score: number;
+    totalQuestions: number;
+    timestamp: number;
     user: string;
 }
 
@@ -92,14 +92,14 @@ export interface Topic {
 export interface StudyPlan {
     id: string;
     sessions: StudySession[];
-    examDate: bigint;
-    hoursPerDay: bigint;
+    examDate: number;
+    hoursPerDay: number;
     owner: string;
 }
 
 export interface StudySession {
     id: string;
-    date: bigint;
+    date: number;
     topicId: string;
     durationMinutes: number;
     completed: boolean;
@@ -125,15 +125,16 @@ const CURRENT_USER_ID = 'local-user-principal-id';
 // Helper to serialize BigInt for JSON storage
 const replacer = (key: string, value: any) => {
     if (typeof value === 'bigint') {
-        return value.toString() + 'n'; // Mark as bigint
+        return value.toString(); // Convert to string (though we avoided BigInt usage mostly now)
     }
     return value;
 };
 
 // Helper to deserialize BigInt from JSON storage
 const reviver = (key: string, value: any) => {
+    // Legacy support if there are '123n' strings
     if (typeof value === 'string' && /^\d+n$/.test(value)) {
-        return BigInt(value.slice(0, -1));
+        return Number(value.slice(0, -1));
     }
     return value;
 };
@@ -169,7 +170,7 @@ class LocalStorageService {
         if (!profile) return { newLevel: 1, leveledUp: false };
 
         // Ensure defaults if missing (migration)
-        const currentXp = Number(profile.xp || 0n);
+        const currentXp = Number(profile.xp || 0);
         const currentLevel = profile.level || 1;
 
         const newXp = currentXp + amount;
@@ -181,7 +182,7 @@ class LocalStorageService {
 
         this.saveCallerUserProfile({
             ...profile,
-            xp: BigInt(newXp),
+            xp: newXp,
             level: newLevel
         });
 
@@ -215,7 +216,7 @@ class LocalStorageService {
         this.saveCallerUserProfile({
             ...profile,
             dailyStreak: newStreak,
-            lastActivityDate: BigInt(now.getTime())
+            lastActivityDate: now.getTime()
         });
     }
 
@@ -234,7 +235,7 @@ class LocalStorageService {
         return this.getAllTasks().sort((a, b) => Number(a.dueDate - b.dueDate));
     }
 
-    createTask(title: string, description: string, dueDate: bigint, subjectTags: string[]): string {
+    createTask(title: string, description: string, dueDate: number, subjectTags: string[]): string {
         const id = uuidv4();
         const task: StudyTask = {
             id,
@@ -251,7 +252,7 @@ class LocalStorageService {
         return id;
     }
 
-    updateTask(id: string, title: string, description: string, dueDate: bigint, subjectTags: string[], status: TaskStatus) {
+    updateTask(id: string, title: string, description: string, dueDate: number, subjectTags: string[], status: TaskStatus) {
         const tasks = this.getItem<Record<string, StudyTask>>('studyTasks') || {};
         if (tasks[id]) {
             tasks[id] = { ...tasks[id], title, description, dueDate, subjectTags, status };
@@ -271,13 +272,13 @@ class LocalStorageService {
         return Object.values(results);
     }
 
-    createQuizResult(score: bigint, totalQuestions: bigint): string {
+    createQuizResult(score: number, totalQuestions: number): string {
         const id = uuidv4();
         const result: QuizResult = {
             id,
             score,
             totalQuestions,
-            timestamp: BigInt(Date.now()),
+            timestamp: Date.now(),
             user: CURRENT_USER_ID
         };
         const results = this.getItem<Record<string, QuizResult>>('quizResults') || {};
@@ -307,7 +308,7 @@ class LocalStorageService {
             title,
             content,
             owner: CURRENT_USER_ID,
-            createdAt: BigInt(Date.now()),
+            createdAt: Date.now(),
             fileType,
         };
         const materials = this.getItem<Record<string, UploadedMaterial>>('materials') || {};
@@ -324,7 +325,7 @@ class LocalStorageService {
             title,
             content,
             owner: CURRENT_USER_ID,
-            createdAt: BigInt(Date.now()),
+            createdAt: Date.now(),
             fileType: FileType.pdf,
             // originalFile: pdfBlob - Removing this to prevent hitting 5MB LocalStorage limit
             // We only need the text content for the AI features anyway.
@@ -350,8 +351,8 @@ class LocalStorageService {
 
     // Study Plans (Mock)
     getAllStudyPlansForCaller(): StudyPlan[] { return []; }
-    createStudyPlan(sessions: StudySession[], examDate: bigint, hoursPerDay: bigint): string { return 'mock-id'; }
-    updateStudyPlan(id: string, sessions: StudySession[], examDate: bigint, hoursPerDay: bigint): void { }
+    createStudyPlan(sessions: StudySession[], examDate: number, hoursPerDay: number): string { return 'mock-id'; }
+    updateStudyPlan(id: string, sessions: StudySession[], examDate: number, hoursPerDay: number): void { }
     deleteStudyPlan(id: string): void { }
 
     // Quizzes (Mock)
