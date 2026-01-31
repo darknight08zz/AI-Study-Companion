@@ -1,5 +1,5 @@
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -7,27 +7,40 @@ if (!API_KEY) {
   console.error("Missing Gemini API Key in .env file");
 }
 
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+let genAI: GoogleGenerativeAI | null = null;
+let model: GenerativeModel | null = null;
 
-export const generateContent = async (prompt: string): Promise<string> => {
+if (API_KEY) {
+  genAI = new GoogleGenerativeAI(API_KEY);
+  model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+}
+
+const getModel = () => {
   if (!API_KEY) {
     throw new Error("Gemini API Key is missing. Please add VITE_GEMINI_API_KEY to your .env file.");
   }
+  return model!;
+};
 
+export const generateContent = async (prompt: string): Promise<string> => {
   try {
-    const result = await model.generateContent(prompt);
+    const aiModel = getModel();
+    const result = await aiModel.generateContent(prompt);
     return result.response.text();
   } catch (error: any) {
     console.error("Gemini API Error:", error);
 
     // Try to list models to see what's available
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
-      const data = await response.json();
-      const modelNames = data.models?.map((m: any) => m.name) || [];
-      console.log("Available Models:", modelNames);
-      throw new Error((error.message || "Failed") + ` | Available models: ${modelNames.join(", ")}`);
+      if (API_KEY) {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
+        const data = await response.json();
+        const modelNames = data.models?.map((m: any) => m.name) || [];
+        console.log("Available Models:", modelNames);
+        throw new Error((error.message || "Failed") + ` | Available models: ${modelNames.join(", ")}`);
+      } else {
+        throw error;
+      }
     } catch (listError) {
       console.error("Failed to list models", listError);
       throw new Error(error.message || "Failed to generate content with Gemini.");
@@ -41,9 +54,7 @@ export interface ChatMessage {
 }
 
 export const chatWithMaterial = async (history: ChatMessage[], message: string, context: string, persona: string = 'friendly'): Promise<string> => {
-  if (!API_KEY) {
-    throw new Error("Gemini API Key is missing.");
-  }
+  const aiModel = getModel();
 
   const personaPrompts: Record<string, string> = {
     friendly: "You are a friendly and encouraging study assistant. Use emojis occasionally and keep the tone light and helpful.",
@@ -55,7 +66,7 @@ export const chatWithMaterial = async (history: ChatMessage[], message: string, 
   const systemInstruction = personaPrompts[persona] || personaPrompts.friendly;
 
   try {
-    const chat = model.startChat({
+    const chat = aiModel.startChat({
       history: [
         {
           role: "user",

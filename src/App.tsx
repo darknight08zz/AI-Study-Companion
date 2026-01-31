@@ -18,6 +18,7 @@ export default function App() {
     // State for managing landing page vs login screen
     const [showLoginScreen, setShowLoginScreen] = useState(false);
     const [initialSignUp, setInitialSignUp] = useState(false);
+    const [activeTab, setActiveTab] = useState('overview');
 
     const isAuthenticated = !!identity;
     const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
@@ -71,7 +72,7 @@ export default function App() {
         );
     }
 
-    const [activeTab, setActiveTab] = useState('overview');
+
 
     return (
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
