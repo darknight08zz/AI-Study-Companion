@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'; // Added useRef, useEffect
+import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -665,11 +666,15 @@ export default function LibraryTab() {
                             )}
                             {chatHistory.map((msg, i) => (
                                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[80%] rounded-lg p-3 ${msg.role === 'user'
+                                    <div className={`max-w-[85%] rounded-lg p-3 overflow-hidden ${msg.role === 'user'
                                         ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted'
+                                        : 'bg-muted dark:bg-muted/50'
                                         }`}>
-                                        <p className="text-sm whitespace-pre-wrap">{msg.parts}</p>
+                                        <div className="prose dark:prose-invert prose-sm max-w-none break-words leading-relaxed">
+                                            <ReactMarkdown>
+                                                {msg.parts}
+                                            </ReactMarkdown>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
