@@ -1,7 +1,7 @@
 
 import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_KEY = import.meta.env.GEMINI_API_KEY;
 
 if (!API_KEY) {
   console.error("Missing Gemini API Key in .env file");
@@ -16,7 +16,7 @@ if (API_KEY) {
 
 const getModel = async () => {
   if (!API_KEY) {
-    throw new Error("Gemini API Key is missing. Please add VITE_GEMINI_API_KEY to your .env file.");
+    throw new Error("Gemini API Key is missing. Please add GEMINI_API_KEY to your .env file.");
   }
 
   // If we already have a working model, return it

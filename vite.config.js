@@ -15,6 +15,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
     logLevel: 'info',
+    envPrefix: ['VITE_', 'GEMINI_', 'SUPABASE_'],
     build: {
         emptyOutDir: true,
         sourcemap: false,
