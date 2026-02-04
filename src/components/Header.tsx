@@ -3,7 +3,7 @@ import { useGetCallerUserProfile } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { BookOpen, LogOut, Moon, Sun, Settings } from 'lucide-react';
+import { BookOpen, LogOut, Moon, Sun, Settings, Menu } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import {
     DropdownMenu,
@@ -12,6 +12,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { SettingsDialog } from './SettingsDialog';
 import { useState } from 'react';
 
@@ -54,11 +55,45 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('overview')}>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                        <BookOpen className="h-6 w-6 text-primary" />
+                <div className="flex items-center gap-4">
+                    <div className="md:hidden">
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon" className="mr-2">
+                                    <Menu className="h-5 w-5" />
+                                    <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="left">
+                                <SheetHeader>
+                                    <SheetTitle>Navigation</SheetTitle>
+                                </SheetHeader>
+                                <div className="flex flex-col gap-4 mt-6">
+                                    {navItems.map((item) => (
+                                        <SheetClose asChild key={item.id}>
+                                            <button
+                                                onClick={() => {
+                                                    setActiveTab(item.id);
+                                                }}
+                                                className={`text-left text-sm font-medium transition-colors hover:text-primary ${activeTab === item.id
+                                                    ? 'text-primary font-semibold'
+                                                    : 'text-muted-foreground'
+                                                    }`}
+                                            >
+                                                {item.label}
+                                            </button>
+                                        </SheetClose>
+                                    ))}
+                                </div>
+                            </SheetContent>
+                        </Sheet>
                     </div>
-                    <span className="text-xl font-bold hidden md:inline-block">AI Companion</span>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('overview')}>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                            <BookOpen className="h-6 w-6 text-primary" />
+                        </div>
+                        <span className="text-xl font-bold hidden md:inline-block">AI Companion</span>
+                    </div>
                 </div>
 
                 {/* Box Flex Navigation - Top Center */}
@@ -68,8 +103,8 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === item.id
-                                    ? 'text-primary font-semibold'
-                                    : 'text-muted-foreground'
+                                ? 'text-primary font-semibold'
+                                : 'text-muted-foreground'
                                 }`}
                         >
                             {item.label}
