@@ -12,19 +12,49 @@ let model: GenerativeModel | null = null;
 
 if (API_KEY) {
   genAI = new GoogleGenerativeAI(API_KEY);
-  model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 }
 
-const getModel = () => {
+const getModel = async () => {
   if (!API_KEY) {
     throw new Error("Gemini API Key is missing. Please add VITE_GEMINI_API_KEY to your .env file.");
   }
-  return model!;
+
+  // If we already have a working model, return it
+  if (model) return model;
+
+  const modelsToTry = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-001",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro"
+  ];
+
+  const errors: string[] = [];
+
+  for (const modelName of modelsToTry) {
+    try {
+      const candidateModel = genAI!.getGenerativeModel({ model: modelName });
+      // Test the model with a simple prompt to verify access
+      await candidateModel.generateContent("test");
+      console.log(`Successfully connected to ${modelName}`);
+      model = candidateModel;
+      return model;
+    } catch (e: any) {
+      console.warn(`Failed to connect to ${modelName}:`, e.message);
+      errors.push(`${modelName}: ${e.message}`);
+      // Continue to next model
+    }
+  }
+
+  // If we get here, all models failed.
+  throw new Error("Failed to connect to ANY Gemini model. Errors: " + errors.join("; "));
 };
 
 export const generateContent = async (prompt: string): Promise<string> => {
   try {
-    const aiModel = getModel();
+    const aiModel = await getModel();
     const result = await aiModel.generateContent(prompt);
     return result.response.text();
   } catch (error: any) {
@@ -54,7 +84,7 @@ export interface ChatMessage {
 }
 
 export const chatWithMaterial = async (history: ChatMessage[], message: string, context: string, persona: string = 'friendly'): Promise<string> => {
-  const aiModel = getModel();
+  const aiModel = await getModel();
 
   const personaPrompts: Record<string, string> = {
     friendly: "You are a friendly and encouraging study assistant. Use emojis occasionally and keep the tone light and helpful.",
