@@ -593,7 +593,7 @@ export default function LibraryTab() {
 
             {/* View Material Dialog - Keep as is */}
             <Dialog open={!!viewMaterial} onOpenChange={() => setViewMaterial(null)}>
-                <DialogContent className="max-w-3xl max-h-[80vh]">
+                <DialogContent className="w-full h-full max-w-none rounded-none sm:h-auto sm:max-h-[80vh] sm:rounded-lg sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             {viewMaterial?.fileType === FileType.pdf ? (
@@ -617,7 +617,7 @@ export default function LibraryTab() {
 
             {/* Smart Summary Dialog - Keep as is */}
             <Dialog open={!!summaryMaterial} onOpenChange={() => setSummaryMaterial(null)}>
-                <DialogContent className="w-[95vw] max-w-none h-[95vh] flex flex-col p-6">
+                <DialogContent className="w-full h-full max-w-none rounded-none sm:h-[95vh] sm:w-[95vw] sm:max-w-[95vw] sm:rounded-lg flex flex-col p-4 sm:p-6">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-2xl">
                             <Sparkles className="h-6 w-6 text-primary" />
@@ -645,7 +645,7 @@ export default function LibraryTab() {
 
             {/* Chat Dialog - NEW */}
             <Dialog open={!!chatMaterial} onOpenChange={() => setChatMaterial(null)}>
-                <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                <DialogContent className="w-full h-full max-w-none rounded-none sm:h-[80vh] sm:max-w-5xl sm:rounded-lg flex flex-col">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <MessageCircle className="h-5 w-5 text-primary" />
