@@ -124,3 +124,27 @@ export const chatWithMaterial = async (history: ChatMessage[], message: string, 
     throw new Error("Failed to send message to Gemini.");
   }
 };
+
+export const fileToGenerativePart = async (file: File): Promise<{ inlineData: { data: string; mimeType: string } }> => {
+  const base64EncodedDataPromise = new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+    reader.readAsDataURL(file);
+  });
+  return {
+    inlineData: { data: await base64EncodedDataPromise as string, mimeType: file.type },
+  };
+};
+
+export const transcribeHandwrittenNote = async (file: File): Promise<string> => {
+  try {
+    const aiModel = await getModel();
+    const imagePart = await fileToGenerativePart(file);
+    const prompt = "Transcribe this handwritten note into clear, formatted text. Fix any obvious spelling errors but keep the content authentic. Return ONLY the transcribed text.";
+    const result = await aiModel.generateContent([prompt, imagePart]);
+    return result.response.text();
+  } catch (error: any) {
+    console.error("Gemini Vision Error:", error);
+    throw new Error("Failed to transcribe image. " + error.message);
+  }
+};

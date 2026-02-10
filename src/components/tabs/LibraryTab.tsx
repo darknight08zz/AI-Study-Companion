@@ -25,10 +25,12 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogFooter, // Added DialogFooter
+    DialogFooter,
 } from '@/components/ui/dialog';
-import { Upload, FileText, File, Trash2, Eye, Loader2, X, Sparkles, Brain, FileOutput, Library, MessageCircle, Send, Bot, User } from 'lucide-react'; // Added icons
+import { Upload, FileText, File, Trash2, Eye, Loader2, X, Sparkles, Brain, FileOutput, Library, MessageCircle, Send, Bot, User, PenTool, Mic, Volume2, VolumeX, Share2, Download, Globe } from 'lucide-react'; // Added icons
 import { toast } from 'sonner';
+import { HandwritingUploader } from '../HandwritingUploader';
+import { useSpeech } from '../../hooks/useSpeech'; // Import hook
 import {
     useGetAllMaterialsSortedByDate,
     useUploadMaterial,
@@ -37,6 +39,8 @@ import {
     useGetAnalyzedSyllabusByMaterial,
     useCreateAnalyzedSyllabus,
     useGetCallerUserProfile, // Added import
+    useMakeMaterialPublic,
+    useImportSharedMaterial
 } from '../../hooks/useQueries';
 import { FileType, DifficultyLevel, type UploadedMaterial, type Topic } from '../../services/database';
 import { generateSummary, extractKeyPoints } from '../../services/summarizer';
@@ -90,6 +94,15 @@ export default function LibraryTab() {
     const uploadPdfWithBlob = useUploadPdfWithBlob();
     const deleteMaterial = useDeleteMaterial();
     const createAnalyzedSyllabus = useCreateAnalyzedSyllabus();
+
+    // UI State for Sharing
+    const [shareMaterial, setShareMaterial] = useState<UploadedMaterial | null>(null);
+    const [importId, setImportId] = useState('');
+    const makeMaterialPublic = useMakeMaterialPublic();
+    const importSharedMaterial = useImportSharedMaterial();
+
+    // Voice Hook
+    const { speak, stopSpeaking, listen, isListening, isSpeaking, isSupported: isSpeechSupported } = useSpeech();
 
     useEffect(() => {
         if (chatScrollRef.current) {
@@ -425,7 +438,33 @@ export default function LibraryTab() {
                             <TabsList className="grid w-full grid-cols-2 mb-6">
                                 <TabsTrigger value="pdf">PDF Document</TabsTrigger>
                                 <TabsTrigger value="text">Paste Text</TabsTrigger>
+                                <TabsTrigger value="handwriting">Handwriting</TabsTrigger>
                             </TabsList>
+                            <TabsContent value="handwriting" className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="hw-title">Title</Label>
+                                    <Input
+                                        id="hw-title"
+                                        placeholder="e.g., Biology Class Notes"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                    />
+                                </div>
+                                <HandwritingUploader onTranscriptionComplete={(text) => setTextContent(text)} />
+                                {textContent && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
+                                        <Label>Transcribed Text (Edit if needed)</Label>
+                                        <Textarea
+                                            value={textContent}
+                                            onChange={(e) => setTextContent(e.target.value)}
+                                            rows={8}
+                                        />
+                                        <Button onClick={() => setUploadType('text')} variant="outline" size="sm" className="w-full">
+                                            Continue to Upload
+                                        </Button>
+                                    </div>
+                                )}
+                            </TabsContent>
                             <TabsContent value="pdf" className="space-y-4">
                                 {/* ... (PDF Upload UI same as before) ... */}
                                 <div className="space-y-2">
@@ -546,6 +585,35 @@ export default function LibraryTab() {
                                 </>
                             )}
                         </Button>
+
+                        <Separator className="my-4" />
+
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-medium">Import Shared Material</h4>
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Paste Share ID..."
+                                    value={importId}
+                                    onChange={(e) => setImportId(e.target.value)}
+                                />
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        if (!importId) return;
+                                        importSharedMaterial.mutate(importId, {
+                                            onSuccess: () => {
+                                                toast.success("Material imported successfully!");
+                                                setImportId('');
+                                            },
+                                            onError: () => toast.error("Failed to import. Check the ID.")
+                                        });
+                                    }}
+                                    disabled={!importId || importSharedMaterial.isPending}
+                                >
+                                    {importSharedMaterial.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                                </Button>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -579,7 +647,20 @@ export default function LibraryTab() {
                                             onDelete={() => setDeleteId(material.id)}
                                             onAnalyze={() => analyzeSyllabus(material)}
                                             onSummarize={() => handleSummarize(material)}
-                                            onChat={() => handleChatOpen(material)} // Added onChat prop
+                                            onChat={() => handleChatOpen(material)}
+                                            onShare={() => {
+                                                if (material.isPublic) {
+                                                    navigator.clipboard.writeText(material.shareId || '');
+                                                    toast.success("Share ID copied to clipboard!");
+                                                } else {
+                                                    makeMaterialPublic.mutate(material.id, {
+                                                        onSuccess: (shareId) => {
+                                                            toast.success("Material is now public! ID Copied.");
+                                                            navigator.clipboard.writeText(shareId);
+                                                        }
+                                                    });
+                                                }
+                                            }}
                                             isAnalyzing={analyzingMaterialId === material.id && isAnalyzing}
                                             formatDate={formatDate}
                                         />
@@ -593,7 +674,7 @@ export default function LibraryTab() {
 
             {/* View Material Dialog - Keep as is */}
             <Dialog open={!!viewMaterial} onOpenChange={() => setViewMaterial(null)}>
-                <DialogContent className="w-full h-full max-w-none rounded-none sm:h-auto sm:max-h-[80vh] sm:rounded-lg sm:max-w-3xl">
+                <DialogContent className="w-full h-full max-w-none rounded-none sm:h-auto sm:max-h-[80vh] sm:max-w-3xl sm:rounded-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             {viewMaterial?.fileType === FileType.pdf ? (
@@ -626,6 +707,11 @@ export default function LibraryTab() {
                         <DialogDescription className="text-base">
                             AI-generated summary of key points
                         </DialogDescription>
+                        <div className="absolute right-12 top-4">
+                            <Button variant="outline" size="icon" onClick={() => isSpeaking ? stopSpeaking() : speak(summaryText)} disabled={!summaryText}>
+                                {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                            </Button>
+                        </div>
                     </DialogHeader>
 
                     <div className="flex-1 min-h-0 mt-4">
@@ -676,6 +762,11 @@ export default function LibraryTab() {
                                             </ReactMarkdown>
                                         </div>
                                     </div>
+                                    {msg.role === 'model' && (
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 ml-2 mt-2 opacity-50 hover:opacity-100" onClick={() => speak(msg.parts)}>
+                                            <Volume2 className="h-3 w-3" />
+                                        </Button>
+                                    )}
                                 </div>
                             ))}
                             {isChatting && (
@@ -705,6 +796,22 @@ export default function LibraryTab() {
                         />
                         <Button size="icon" onClick={handleSendMessage} disabled={isChatting || !chatInput.trim()}>
                             <Send className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="secondary"
+                            onClick={() => {
+                                if (!isSpeechSupported) {
+                                    toast.error("Speech recognition is not supported in this browser.");
+                                    return;
+                                }
+                                listen((text) => setChatInput(text));
+                            }}
+                            className={isListening ? "animate-pulse bg-red-100 text-red-600" : ""}
+                            title={isSpeechSupported ? "Speak to type" : "Speech recognition not supported"}
+                            disabled={!isSpeechSupported && !isListening}
+                        >
+                            <Mic className={`h-4 w-4 ${!isSpeechSupported ? 'opacity-50' : ''}`} />
                         </Button>
                     </div>
                 </DialogContent>
@@ -744,7 +851,8 @@ function MaterialCard({
     onDelete,
     onAnalyze,
     onSummarize,
-    onChat, // Added onChat
+    onChat,
+    onShare,
     isAnalyzing,
     formatDate,
 }: {
@@ -753,14 +861,15 @@ function MaterialCard({
     onDelete: () => void;
     onAnalyze: () => void;
     onSummarize: () => void;
-    onChat: () => void; // Added onChat type
+    onChat: () => void;
+    onShare: () => void;
     isAnalyzing: boolean;
     formatDate: (timestamp: number) => string;
 }) {
     const { data: analyzedSyllabus } = useGetAnalyzedSyllabusByMaterial(material.id);
 
     return (
-        <div className="rounded-lg border bg-card p-4 hover:bg-accent/50 transition-colors">
+        <div className="rounded-lg border bg-card p-4 hover:bg-accent/50 transition-colors group">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -770,6 +879,11 @@ function MaterialCard({
                             <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
                         )}
                         <h4 className="font-semibold truncate">{material.title}</h4>
+                        {material.isPublic && (
+                            <Badge variant="outline" className="ml-2 text-[10px] h-5 px-1 bg-blue-50 text-blue-600 border-blue-200">
+                                <Globe className="h-3 w-3 mr-1" /> Public
+                            </Badge>
+                        )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                         <Badge variant="outline" className="text-xs">
@@ -798,14 +912,29 @@ function MaterialCard({
                             onClick={onAnalyze}
                             disabled={isAnalyzing}
                             title="Analyze syllabus"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
                         >
-                            {isAnalyzing ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Sparkles className="h-4 w-4 text-primary" />
-                            )}
+                            {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
                         </Button>
                     )}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onShare}
+                        title="Share Material"
+                        className="h-8 w-8 text-muted-foreground hover:text-blue-500"
+                    >
+                        <Share2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onShare}
+                        title={material.isPublic ? "Copy Share ID" : "Make Public & Share"}
+                        className={`h-8 w-8 ${material.isPublic ? 'text-blue-500 hover:text-blue-600' : 'text-muted-foreground hover:text-blue-500'}`}
+                    >
+                        <Share2 className="h-4 w-4" />
+                    </Button>
                     <Button
                         variant="ghost"
                         size="icon"

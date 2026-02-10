@@ -3,10 +3,11 @@ import { useGetAllTasksSortedByDueDate, useDeleteTask, useUpdateTask, useAddXp }
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Calendar, Timer, Play, Pause, Square, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar, Timer, Play, Pause, Square, ExternalLink, CalendarPlus } from 'lucide-react';
 import { TaskStatus, TaskStatusEnum, type StudyTask } from '../../services/localStorage';
 import { toast } from 'sonner';
 import { useEffect, useRef } from 'react';
+import { generateICS } from '../../utils/calendar';
 import TaskDialog from '../TaskDialog';
 import {
     AlertDialog,
@@ -280,6 +281,18 @@ export default function PlannerTab() {
                                                 <Timer className="h-4 w-4" />
                                             </Button>
                                         )}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                                generateICS(task);
+                                                toast.success("Calendar event downloaded!");
+                                            }}
+                                            title="Add to Calendar"
+                                            className="text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                        >
+                                            <CalendarPlus className="h-4 w-4" />
+                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"

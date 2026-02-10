@@ -10,10 +10,13 @@ import type {
     FileType,
     AnalyzedSyllabus,
     Topic,
+    Quiz,
     StudyPlan,
     StudySession,
-    Quiz,
-    Question
+
+    Question,
+    SavedQuiz,
+    FlashcardDeck
 } from '../services/database';
 
 // User Profile Queries
@@ -257,7 +260,94 @@ export function useDeleteMaterial() {
     });
 }
 
-// Stubbed out remaining mock queries for compilation
+// Sharing Queries
+export function useMakeMaterialPublic() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            return databaseService.makeMaterialPublic(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['materials'] });
+        },
+    });
+}
+
+
+export function useImportSharedMaterial() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (shareId: string) => {
+            return databaseService.importSharedMaterial(shareId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['materials'] });
+        },
+    });
+}
+
+// Sharing Queries
+// Hooks removed (duplicates) home
+
+// --- Quizzes Persistence Hooks ---
+
+export function useGetQuizzes() {
+    return useQuery<SavedQuiz[]>({
+        queryKey: ['quizzes'],
+        queryFn: async () => {
+            return databaseService.getQuizzes();
+        },
+    });
+}
+
+export function useSaveQuiz() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (params: { title: string; questions: Question[]; materialId?: string }) => {
+            return databaseService.saveQuiz(params.title, params.questions, params.materialId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+        },
+    });
+}
+
+// --- Flashcard Decks Persistence Hooks ---
+
+export function useGetFlashcardDecks() {
+    return useQuery<FlashcardDeck[]>({
+        queryKey: ['flashcard_decks'],
+        queryFn: async () => {
+            return databaseService.getFlashcardDecks();
+        },
+    });
+}
+
+export function useSaveFlashcardDeck() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (params: { title: string; cards: any[]; materialId?: string }) => {
+            return databaseService.saveFlashcardDeck(params.title, params.cards, params.materialId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['flashcard_decks'] });
+        },
+    });
+}
+
+export function useDeleteFlashcardDeck() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            return databaseService.deleteFlashcardDeck(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['flashcard_decks'] });
+        },
+    });
+}
+
+// Stubbed out remaining mock queries for compilation (cleaned up)
 export function useGetAllAnalyzedSyllabi() { return useQuery({ queryKey: ['stub'], queryFn: () => [] }); }
 export function useGetAnalyzedSyllabusByMaterial(id: string) { return useQuery({ queryKey: ['stub'], queryFn: () => null }); }
 
@@ -278,4 +368,14 @@ export function useDeleteStudyPlan() { return useMutation({ mutationFn: async ()
 export function useGetAllQuizzes() { return useQuery({ queryKey: ['stub'], queryFn: () => [] }); }
 export function useGetQuizzesByTopic(id: string) { return useQuery({ queryKey: ['stub'], queryFn: () => [] }); }
 export function useCreateQuiz() { return useMutation({ mutationFn: async () => { } }); }
-export function useDeleteQuiz() { return useMutation({ mutationFn: async () => { } }); }
+export function useDeleteQuiz() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            return databaseService.deleteQuiz(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+        },
+    });
+}

@@ -7,8 +7,8 @@ export interface Flashcard {
     definition: string;
 }
 
-export const generateFlashcardsFromContent = async (content: string): Promise<Flashcard[]> => {
-    const prompt = `Generate 10 flashcards (term and definition) from the following text.
+export const generateFlashcardsFromContent = async (content: string, cardCount: number = 10): Promise<Flashcard[]> => {
+    const prompt = `Generate ${cardCount} flashcards (term and definition) from the following text.
     
     Return the response strictly as a JSON array of objects with the following structure:
     [
@@ -19,7 +19,7 @@ export const generateFlashcardsFromContent = async (content: string): Promise<Fl
         }
     ]
 
-    Text: ${content.substring(0, 20000)}`;
+    Text: ${content.substring(0, 25000)}`;
 
     try {
         const result = await generateContent(prompt);

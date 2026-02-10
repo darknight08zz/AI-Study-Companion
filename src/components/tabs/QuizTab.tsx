@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { useCreateQuizResult, useGetAllMaterialsSortedByDate } from '../../hooks/useQueries';
-import { generateQuizFromContent } from '../../services/quizGenerator';
+import { useCreateQuizResult, useGetAllMaterialsSortedByDate, useSaveQuiz, useGetQuizzes, useDeleteQuiz } from '../../hooks/useQueries';
+import { generateQuizFromContent, GeneratedQuestion } from '../../services/quizGenerator';
+import { Slider } from '@/components/ui/slider';
+import { Trash2, Play, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -17,6 +19,9 @@ interface Question {
     correctAnswer: number;
     explanation: string;
 }
+
+// Convert GeneratedQuestion to component Question interface if needed, or unify.
+// The component uses 'Question' interface locally defined which matches.
 
 const sampleQuestions: Question[] = [
     {
@@ -64,9 +69,13 @@ export default function QuizTab() {
     const [showResults, setShowResults] = useState(false);
     const [selectedMaterialId, setSelectedMaterialId] = useState<string>('');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [questionCount, setQuestionCount] = useState([5]);
 
     const createQuizResult = useCreateQuizResult();
+    const saveQuiz = useSaveQuiz();
     const { data: materials = [] } = useGetAllMaterialsSortedByDate();
+    const { data: savedQuizzes = [] } = useGetQuizzes();
+    const deleteQuiz = useDeleteQuiz();
 
     // Initialize with sample if no generation happens
     const startSampleQuiz = () => {
@@ -89,18 +98,67 @@ export default function QuizTab() {
 
         setIsGenerating(true);
         try {
-            const generatedQuestions = await generateQuizFromContent(material.content);
-            setQuestions(generatedQuestions);
-            setSelectedAnswers(new Array(generatedQuestions.length).fill(null));
+            const count = questionCount[0];
+            const generatedQuestions = await generateQuizFromContent(material.content, 'medium', count);
+
+            // Auto-save the quiz
+            const quizTitle = `Quiz: ${material.title} (${new Date().toLocaleDateString()})`;
+            await saveQuiz.mutateAsync({
+                title: quizTitle,
+                questions: generatedQuestions.map(q => ({
+                    id: q.id.toString(),
+                    text: q.question,
+                    options: q.options,
+                    correctOptionIndex: q.correctAnswer
+                })),
+                materialId: material.id
+            });
+
+            // Map to local Question interface
+            const mappedQuestions: Question[] = generatedQuestions.map(q => ({
+                id: q.id,
+                question: q.question,
+                options: q.options,
+                correctAnswer: q.correctAnswer,
+                explanation: q.explanation
+            }));
+
+            setQuestions(mappedQuestions);
+            setSelectedAnswers(new Array(mappedQuestions.length).fill(null));
             setQuizStarted(true);
             setCurrentQuestion(0);
             setShowResults(false);
-            toast.success(`Generated ${generatedQuestions.length} questions from "${material.title}"`);
+            toast.success(`Generated and saved ${generatedQuestions.length} questions!`);
         } catch (error: any) {
             toast.error(error.message || 'Failed to generate quiz');
             console.error(error);
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const handleLoadQuiz = (quiz: any) => {
+        const mappedQuestions: Question[] = quiz.questions.map((q: any, index: number) => ({
+            id: index + 1,
+            question: q.text,
+            options: q.options,
+            correctAnswer: q.correctOptionIndex,
+            explanation: "Review the material for more details." // Saved quizzes might not have explanation yet unless schema updated
+        }));
+
+        setQuestions(mappedQuestions);
+        setSelectedAnswers(new Array(mappedQuestions.length).fill(null));
+        setQuizStarted(true);
+        setCurrentQuestion(0);
+        setShowResults(false);
+        toast.success(`Loaded "${quiz.title}"`);
+    };
+
+    const handleDeleteQuiz = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (confirm('Are you sure you want to delete this saved quiz?')) {
+            await deleteQuiz.mutateAsync(id);
+            toast.success('Quiz deleted');
         }
     };
 
@@ -191,12 +249,23 @@ export default function QuizTab() {
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {materials.length === 0 && (
-                                    <p className="text-xs text-muted-foreground">
-                                        No materials found. Upload documents in the Library tab first.
-                                    </p>
-                                )}
                             </div>
+
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Number of Questions: {questionCount[0]}</Label>
+                                </div>
+                                <Slider
+                                    value={questionCount}
+                                    onValueChange={setQuestionCount}
+                                    min={5}
+                                    max={20}
+                                    step={1}
+                                    className="py-2"
+                                />
+                                <p className="text-xs text-muted-foreground">Select between 5 and 20 questions.</p>
+                            </div>
+
                             <Button
                                 onClick={handleGenerateQuiz}
                                 className="w-full gap-2"
@@ -207,10 +276,47 @@ export default function QuizTab() {
                                 ) : (
                                     <>
                                         <Brain className="h-4 w-4" />
-                                        Generate Quiz
+                                        Generate & Save Quiz
                                     </>
                                 )}
                             </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Saved Quizzes Card */}
+                    <Card className="md:col-span-2">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Save className="h-5 w-5" />
+                                Saved Quizzes
+                            </CardTitle>
+                            <CardDescription>
+                                Resume your previously generated quizzes.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {savedQuizzes.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-4">No saved quizzes yet. Generate one above!</p>
+                            ) : (
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    {savedQuizzes.map((quiz) => (
+                                        <div key={quiz.id} className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/10 transition-colors cursor-pointer" onClick={() => handleLoadQuiz(quiz)}>
+                                            <div className="space-y-1 overflow-hidden">
+                                                <p className="font-medium truncate">{quiz.title}</p>
+                                                <p className="text-xs text-muted-foreground">{quiz.questions.length} Questions • {new Date(quiz.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={(e) => { e.stopPropagation(); handleLoadQuiz(quiz); }}>
+                                                    <Play className="h-4 w-4" />
+                                                </Button>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={(e) => handleDeleteQuiz(e, quiz.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 

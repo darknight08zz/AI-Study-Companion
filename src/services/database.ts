@@ -30,6 +30,8 @@ export interface UploadedMaterial {
     owner: string;
     createdAt: number;
     fileType: string;
+    isPublic?: boolean;
+    shareId?: string;
 }
 
 export enum FileType {
@@ -93,7 +95,26 @@ export interface Quiz {
     id: string;
     topicId: string;
     questions: Question[];
+
     owner: string;
+}
+
+export interface SavedQuiz {
+    id: string;
+    user_id: string;
+    material_id?: string;
+    title: string;
+    questions: Question[];
+    created_at: number;
+}
+
+export interface FlashcardDeck {
+    id: string;
+    user_id: string;
+    material_id?: string;
+    title: string;
+    cards: { id: string; term: string; definition: string }[];
+    created_at: number;
 }
 
 class DatabaseService {
@@ -244,7 +265,49 @@ class DatabaseService {
         if (error) throw error;
     }
 
-    // Analyzed Syllabi
+
+    async makeMaterialPublic(id: string): Promise<string> {
+        // First check if it already has a share_id, if not generate one (though DB default should handle it on insert, 
+        // existing rows might need one if we didn't backfill). 
+        // My SQL migration adds share_id default gen_random_uuid(), so all rows should have it.
+
+        const { data, error } = await supabase
+            .from('materials')
+            .update({ is_public: true })
+            .eq('id', id)
+            .select('share_id')
+            .single();
+
+        if (error) throw error;
+        return data.share_id;
+    }
+
+    async makeMaterialPrivate(id: string) {
+        const { error } = await supabase
+            .from('materials')
+            .update({ is_public: false })
+            .eq('id', id);
+        if (error) throw error;
+    }
+
+    async importSharedMaterial(shareId: string): Promise<string> {
+        // 1. Find the public material
+        const { data: source, error } = await supabase
+            .from('materials')
+            .select('*')
+            .eq('share_id', shareId)
+            .eq('is_public', true)
+            .single();
+
+        if (error || !source) throw new Error("Material not found or not public");
+
+        // 2. Create a copy for the current user
+        return await this.uploadMaterial(
+            `${source.title} (Imported)`,
+            source.content,
+            source.file_type
+        );
+    }
     async createAnalyzedSyllabus(materialId: string, topics: Topic[]): Promise<void> {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Not logged in");
@@ -256,6 +319,64 @@ class DatabaseService {
             created_at: Date.now()
         });
 
+        if (error) throw error;
+    }
+
+    // --- Quizzes Persistence ---
+
+    async saveQuiz(title: string, questions: Question[], materialId?: string): Promise<string> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not logged in");
+
+        const { data, error } = await supabase.from('quizzes').insert({
+            user_id: user.id,
+            material_id: materialId || null,
+            title,
+            questions, // JSONB
+            created_at: Date.now()
+        }).select().single();
+
+        if (error) throw error;
+        return data.id;
+    }
+
+    async getQuizzes(): Promise<SavedQuiz[]> {
+        const { data, error } = await supabase.from('quizzes').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    }
+
+    async deleteQuiz(id: string) {
+        const { error } = await supabase.from('quizzes').delete().eq('id', id);
+        if (error) throw error;
+    }
+
+    // --- Flashcards Persistence ---
+
+    async saveFlashcardDeck(title: string, cards: any[], materialId?: string): Promise<string> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not logged in");
+
+        const { data, error } = await supabase.from('flashcard_decks').insert({
+            user_id: user.id,
+            material_id: materialId || null,
+            title,
+            cards, // JSONB
+            created_at: Date.now()
+        }).select().single();
+
+        if (error) throw error;
+        return data.id;
+    }
+
+    async getFlashcardDecks(): Promise<FlashcardDeck[]> {
+        const { data, error } = await supabase.from('flashcard_decks').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    }
+
+    async deleteFlashcardDeck(id: string) {
+        const { error } = await supabase.from('flashcard_decks').delete().eq('id', id);
         if (error) throw error;
     }
 

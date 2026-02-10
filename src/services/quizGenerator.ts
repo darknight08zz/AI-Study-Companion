@@ -9,8 +9,8 @@ export interface GeneratedQuestion {
     explanation: string;
 }
 
-export const generateQuizFromContent = async (content: string, difficulty: 'easy' | 'medium' | 'hard' = 'medium'): Promise<GeneratedQuestion[]> => {
-    const prompt = `You are an expert tutor. Create a ${difficulty} difficulty quiz with 5 multiple-choice questions based strictly on the provided text.
+export const generateQuizFromContent = async (content: string, difficulty: 'easy' | 'medium' | 'hard' = 'medium', questionCount: number = 5): Promise<GeneratedQuestion[]> => {
+    const prompt = `You are an expert tutor. Create a ${difficulty} difficulty quiz with ${questionCount} multiple-choice questions based strictly on the provided text.
     
     Guidelines:
     1. Questions should test understanding, not just recall.
@@ -32,7 +32,7 @@ export const generateQuizFromContent = async (content: string, difficulty: 'easy
     ]
 
     Text Content:
-    ${content.substring(0, 25000)}`;
+    ${content.substring(0, 30000)}`;
 
     try {
         const result = await generateContent(prompt);

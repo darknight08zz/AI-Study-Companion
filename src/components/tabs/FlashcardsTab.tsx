@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useGetAllMaterialsSortedByDate } from '../../hooks/useQueries';
+import { useGetAllMaterialsSortedByDate, useSaveFlashcardDeck, useGetFlashcardDecks, useDeleteFlashcardDeck } from '../../hooks/useQueries';
 import { generateFlashcardsFromContent, type Flashcard } from '../../services/flashcardGenerator';
-import { Layers, RotateCw, Check, X as XIcon, ChevronLeft, ChevronRight, Zap, Download, Upload } from 'lucide-react';
+import { Layers, RotateCw, Check, X as XIcon, ChevronLeft, ChevronRight, Zap, Download, Upload, Save, Trash2, Play } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 export default function FlashcardsTab() {
@@ -12,6 +14,11 @@ export default function FlashcardsTab() {
     const [selectedMaterialId, setSelectedMaterialId] = useState<string>('');
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [cardCount, setCardCount] = useState([10]);
+
+    const saveDeck = useSaveFlashcardDeck();
+    const { data: savedDecks = [] } = useGetFlashcardDecks();
+    const deleteDeck = useDeleteFlashcardDeck();
 
     // Study Mode State
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,22 +35,48 @@ export default function FlashcardsTab() {
 
         setIsGenerating(true);
         try {
-            const cards = await generateFlashcardsFromContent(material.content);
+            const count = cardCount[0];
+            const cards = await generateFlashcardsFromContent(material.content, count);
             if (cards.length === 0) {
                 toast.error('Could not generate flashcards from this content. Try a different text.');
             } else {
+                // Auto save
+                const deckTitle = `Deck: ${material.title} (${new Date().toLocaleDateString()})`;
+                await saveDeck.mutateAsync({
+                    title: deckTitle,
+                    cards: cards,
+                    materialId: material.id
+                });
+
                 setFlashcards(cards);
                 setStudySessionActive(true);
                 setCurrentIndex(0);
                 setIsFlipped(false);
                 setKnownCards(new Set());
-                toast.success(`Generated ${cards.length} flashcards!`);
+                toast.success(`Generated and saved ${cards.length} flashcards!`);
             }
         } catch (e) {
             console.error(e);
             toast.error('Failed to generate flashcards');
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const handleLoadDeck = (deck: any) => {
+        setFlashcards(deck.cards);
+        setStudySessionActive(true);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setKnownCards(new Set());
+        toast.success(`Loaded "${deck.title}"`);
+    };
+
+    const handleDeleteDeck = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (confirm('Are you sure you want to delete this saved deck?')) {
+            await deleteDeck.mutateAsync(id);
+            toast.success('Deck deleted');
         }
     };
 
@@ -169,17 +202,33 @@ export default function FlashcardsTab() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <Button
-                            onClick={handleGenerate}
-                            disabled={!selectedMaterialId || isGenerating}
-                            className="w-full"
-                        >
-                            {isGenerating ? (
-                                <>Generatng...</>
-                            ) : (
-                                <><Zap className="nr-2 h-4 w-4" /> Generate Flashcards</>
-                            )}
-                        </Button>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Number of Cards: {cardCount[0]}</Label>
+                                </div>
+                                <Slider
+                                    value={cardCount}
+                                    onValueChange={setCardCount}
+                                    min={5}
+                                    max={30}
+                                    step={1}
+                                    className="py-2"
+                                />
+                                <p className="text-xs text-muted-foreground">Select between 5 and 30 cards.</p>
+                            </div>
+                            <Button
+                                onClick={handleGenerate}
+                                disabled={!selectedMaterialId || isGenerating}
+                                className="w-full"
+                            >
+                                {isGenerating ? (
+                                    <>Generating...</>
+                                ) : (
+                                    <><Zap className="nr-2 h-4 w-4" /> Generate & Save Flashcards</>
+                                )}
+                            </Button>
+                        </div>
 
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
@@ -205,6 +254,32 @@ export default function FlashcardsTab() {
                                 <Download className="mr-2 h-4 w-4" /> Export (Active Deck)
                             </Button>
                         </div>
+
+                        {savedDecks.length > 0 && (
+                            <div className="pt-6 border-t">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <Save className="h-4 w-4" /> Saved Decks
+                                </h3>
+                                <div className="grid gap-3">
+                                    {savedDecks.map((deck) => (
+                                        <div key={deck.id} className="flex items-center justify-between p-3 rounded border hover:bg-accent/10 transition-colors cursor-pointer" onClick={() => handleLoadDeck(deck)}>
+                                            <div className="overflow-hidden">
+                                                <p className="font-medium truncate text-sm">{deck.title}</p>
+                                                <p className="text-xs text-muted-foreground">{deck.cards.length} Cards • {new Date(deck.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-primary" onClick={(e) => { e.stopPropagation(); handleLoadDeck(deck); }}>
+                                                    <Play className="h-3 w-3" />
+                                                </Button>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={(e) => handleDeleteDeck(e, deck.id)}>
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             ) : (
