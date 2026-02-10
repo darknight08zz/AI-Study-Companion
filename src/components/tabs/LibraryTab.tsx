@@ -737,7 +737,7 @@ export default function LibraryTab() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <ScrollArea className="flex-1 pr-4 -mr-4">
+                    <ScrollArea className="flex-1 min-h-0 pr-4 -mr-4">
                         <div className="space-y-4 p-4">
                             {chatHistory.length === 0 && (
                                 <div className="text-center text-muted-foreground py-10">
@@ -747,12 +747,33 @@ export default function LibraryTab() {
                             )}
                             {chatHistory.map((msg, i) => (
                                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[85%] rounded-lg p-3 overflow-hidden ${msg.role === 'user'
+                                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === 'user'
                                         ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted dark:bg-muted/50'
-                                        }`}>
-                                        <div className="prose dark:prose-invert prose-sm max-w-none break-words leading-relaxed">
-                                            <ReactMarkdown>
+                                        : 'bg-muted/80 dark:bg-muted/50 border'
+                                        } max-h-[60vh] overflow-y-auto custom-scrollbar`}>
+                                        <div className={`prose dark:prose-invert prose-sm max-w-none break-words leading-relaxed ${msg.role === 'user' ? 'prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground text-primary-foreground' : ''
+                                            }`}>
+                                            <ReactMarkdown
+                                                components={{
+                                                    p: ({ node, ...props }) => <p className="mb-2 last:mb-0 inline-block" {...props} />,
+                                                    ul: ({ node, ...props }) => <ul className="my-2 pl-4 list-disc space-y-1" {...props} />,
+                                                    ol: ({ node, ...props }) => <ol className="my-2 pl-4 list-decimal space-y-1" {...props} />,
+                                                    li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                                                    pre: ({ node, ...props }) => <pre className="bg-black/10 dark:bg-black/30 p-2 rounded-md overflow-x-auto my-2" {...props} />,
+                                                    code: ({ node, className, children, ...props }: any) => {
+                                                        const match = /language-(\w+)/.exec(className || '')
+                                                        return !String(className).includes('language-') ? (
+                                                            <code className="bg-black/10 dark:bg-black/30 px-1 py-0.5 rounded-sm font-mono text-xs" {...props}>
+                                                                {children}
+                                                            </code>
+                                                        ) : (
+                                                            <code className={className} {...props}>
+                                                                {children}
+                                                            </code>
+                                                        )
+                                                    }
+                                                }}
+                                            >
                                                 {msg.parts}
                                             </ReactMarkdown>
                                         </div>
@@ -776,7 +797,7 @@ export default function LibraryTab() {
                         </div>
                     </ScrollArea>
 
-                    <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t shrink-0">
                         <Input
                             value={chatInput}
                             onChange={(e) => setChatInput(e.target.value)}
