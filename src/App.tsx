@@ -15,7 +15,7 @@ export default function App() {
     const { identity, isInitializing } = useInternetIdentity();
     const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
 
-    // State for managing landing page vs login screen
+
     const [showLoginScreen, setShowLoginScreen] = useState(false);
     const [initialSignUp, setInitialSignUp] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');

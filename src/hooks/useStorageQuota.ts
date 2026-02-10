@@ -16,7 +16,7 @@ export function useStorageQuota() {
             if (quota > 0) {
                 const pct = (usage / quota) * 100;
                 setPercentage(pct);
-                setIsLowSpace(pct > 80); // Alert if > 80% used
+                setIsLowSpace(pct > 80);
             }
         } catch (e) {
             console.error("Failed to check storage quota", e);
@@ -25,10 +25,10 @@ export function useStorageQuota() {
 
     useEffect(() => {
         checkQuota();
-        // Check every minute or on some interval if needed, or just on mount
+
     }, []);
 
-    // Format bytes to human readable string
+
     const formatBytes = (bytes: number, decimals = 2) => {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;

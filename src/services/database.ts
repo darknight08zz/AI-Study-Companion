@@ -113,7 +113,15 @@ export interface FlashcardDeck {
     user_id: string;
     material_id?: string;
     title: string;
-    cards: { id: string; term: string; definition: string }[];
+    cards: {
+        id: string;
+        term: string;
+        definition: string;
+        interval?: number;
+        repetition?: number;
+        efactor?: number;
+        nextReviewDate?: number;
+    }[];
     created_at: number;
 }
 
@@ -369,6 +377,15 @@ class DatabaseService {
         return data.id;
     }
 
+    async updateFlashcardDeck(id: string, cards: any[]): Promise<void> {
+        const { error } = await supabase
+            .from('flashcard_decks')
+            .update({ cards: cards })
+            .eq('id', id);
+
+        if (error) throw error;
+    }
+
     async getFlashcardDecks(): Promise<FlashcardDeck[]> {
         const { data, error } = await supabase.from('flashcard_decks').select('*').order('created_at', { ascending: false });
         if (error) throw error;
@@ -380,7 +397,7 @@ class DatabaseService {
         if (error) throw error;
     }
 
-    // Mock/Stub methods for compatibility
+
     async getAllMaterialsSortedByDate() {
         const materials = await this.getAllMaterialsForCaller();
         return materials.sort((a, b) => a.createdAt - b.createdAt);

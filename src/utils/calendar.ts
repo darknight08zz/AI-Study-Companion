@@ -1,14 +1,14 @@
 import { StudyTask } from '../services/localStorage';
 
 export const generateICS = (task: StudyTask) => {
-    // Ensure we have a valid date
+
     const startDate = new Date(task.dueDate);
     if (isNaN(startDate.getTime())) {
         console.error("Invalid date for task:", task);
         return;
     }
 
-    // Default duration: 1 hour
+
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
     const formatDate = (date: Date) => {

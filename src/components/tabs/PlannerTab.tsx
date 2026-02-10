@@ -34,9 +34,8 @@ export default function PlannerTab() {
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-    // Focus Timer State
     const [focusTask, setFocusTask] = useState<StudyTask | null>(null);
-    const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes
+    const [timeLeft, setTimeLeft] = useState(25 * 60);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -83,7 +82,6 @@ export default function PlannerTab() {
             console.error(e);
         }
 
-        // Optional: Ask to mark task as complete?
         setFocusTask(null);
     };
 
@@ -162,7 +160,7 @@ export default function PlannerTab() {
                 </Button>
             </div>
 
-            {/* Active Focus Timer Banner */}
+
             {focusTask && (
                 <Card className="bg-primary/5 border-primary/20 border-l-4 border-l-primary animate-in slide-in-from-top">
                     <CardContent className="flex items-center justify-between p-4">
@@ -338,7 +336,7 @@ export default function PlannerTab() {
                     <Card className="md:w-auto flex-shrink-0 h-fit">
                         <CardContent className="p-4">
                             <div className="w-full">
-                                {/* Using a simple calendar implementation for now as DayPicker might need component installed */}
+
                                 <div className="text-center font-semibold mb-4">
                                     {selectedDate?.toLocaleString('default', { month: 'long', year: 'numeric' })}
                                 </div>
@@ -346,7 +344,7 @@ export default function PlannerTab() {
                                     {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d} className="text-muted-foreground">{d}</div>)}
                                 </div>
                                 <div className="grid grid-cols-7 gap-1 text-center">
-                                    {/* Simple calendar grid logic wrapper */}
+
                                     {(() => {
                                         const now = selectedDate || new Date();
                                         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

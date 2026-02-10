@@ -19,7 +19,6 @@ const getModel = async () => {
     throw new Error("Gemini API Key is missing. Please add GEMINI_API_KEY to your .env file.");
   }
 
-  // If we already have a working model, return it
   if (model) return model;
 
   const modelsToTry = [
@@ -36,7 +35,6 @@ const getModel = async () => {
   for (const modelName of modelsToTry) {
     try {
       const candidateModel = genAI!.getGenerativeModel({ model: modelName });
-      // Test the model with a simple prompt to verify access
       await candidateModel.generateContent("test");
       console.log(`Successfully connected to ${modelName}`);
       model = candidateModel;
@@ -44,11 +42,11 @@ const getModel = async () => {
     } catch (e: any) {
       console.warn(`Failed to connect to ${modelName}:`, e.message);
       errors.push(`${modelName}: ${e.message}`);
-      // Continue to next model
+
     }
   }
 
-  // If we get here, all models failed.
+
   throw new Error("Failed to connect to ANY Gemini model. Errors: " + errors.join("; "));
 };
 
@@ -60,7 +58,6 @@ export const generateContent = async (prompt: string): Promise<string> => {
   } catch (error: any) {
     console.error("Gemini API Error:", error);
 
-    // Try to list models to see what's available
     try {
       if (API_KEY) {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);

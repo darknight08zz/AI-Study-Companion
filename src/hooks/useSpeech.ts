@@ -22,22 +22,19 @@ export function useSpeech() {
     const speak = useCallback((text: string) => {
         if (!('speechSynthesis' in window)) return;
 
-        // Cancel current speech
         window.speechSynthesis.cancel();
 
-        // Strip markdown characters for better reading
         const cleanText = text
-            .replace(/[#*`_]/g, '') // Remove basic markdown symbols
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Remove links but keep text
+            .replace(/[#*`_]/g, '')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
 
-        // Select a good voice if available
+
         const voices = window.speechSynthesis.getVoices();
-        // Try to verify voices are loaded (safari/chrome quirk)
         if (voices.length > 0) {
             const preferredVoice = voices.find(voice => voice.name.includes('Google US English')) || voices[0];
             if (preferredVoice) utterance.voice = preferredVoice;

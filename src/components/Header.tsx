@@ -96,7 +96,7 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
                     </div>
                 </div>
 
-                {/* Box Flex Navigation - Top Center */}
+
                 <nav className="hidden md:flex items-center gap-6">
                     {navItems.map((item) => (
                         <button

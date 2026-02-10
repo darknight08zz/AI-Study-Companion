@@ -30,7 +30,7 @@ import {
 import { Upload, FileText, File, Trash2, Eye, Loader2, X, Sparkles, Brain, FileOutput, Library, MessageCircle, Send, Bot, User, PenTool, Mic, Volume2, VolumeX, Share2, Download, Globe } from 'lucide-react'; // Added icons
 import { toast } from 'sonner';
 import { HandwritingUploader } from '../HandwritingUploader';
-import { useSpeech } from '../../hooks/useSpeech'; // Import hook
+import { useSpeech } from '../../hooks/useSpeech';
 import {
     useGetAllMaterialsSortedByDate,
     useUploadMaterial,
@@ -38,7 +38,7 @@ import {
     useDeleteMaterial,
     useGetAnalyzedSyllabusByMaterial,
     useCreateAnalyzedSyllabus,
-    useGetCallerUserProfile, // Added import
+    useGetCallerUserProfile,
     useMakeMaterialPublic,
     useImportSharedMaterial
 } from '../../hooks/useQueries';
@@ -47,7 +47,7 @@ import { generateSummary, extractKeyPoints } from '../../services/summarizer';
 import { useStorageQuota } from '../../hooks/useStorageQuota';
 import { chatWithMaterial, type ChatMessage } from '../../services/gemini';
 
-// Helper class for Blob compatibility if needed locally, or just use any
+
 class ExternalBlob {
     static fromBytes(bytes: Uint8Array) { return bytes; }
 }
@@ -64,10 +64,10 @@ export default function LibraryTab() {
     const [analyzingMaterialId, setAnalyzingMaterialId] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-    // User Profile for Persona
+
     const { data: userProfile } = useGetCallerUserProfile();
 
-    // Storage Quota
+
     const { formattedUsage, percentage, isLowSpace, checkQuota } = useStorageQuota();
 
     useEffect(() => {
@@ -77,12 +77,11 @@ export default function LibraryTab() {
     }, [isLowSpace]);
 
 
-    // Summarizer State
     const [summaryMaterial, setSummaryMaterial] = useState<UploadedMaterial | null>(null);
     const [summaryText, setSummaryText] = useState('');
     const [isSummarizing, setIsSummarizing] = useState(false);
 
-    // Chat State
+
     const [chatMaterial, setChatMaterial] = useState<UploadedMaterial | null>(null);
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
@@ -95,13 +94,12 @@ export default function LibraryTab() {
     const deleteMaterial = useDeleteMaterial();
     const createAnalyzedSyllabus = useCreateAnalyzedSyllabus();
 
-    // UI State for Sharing
+
     const [shareMaterial, setShareMaterial] = useState<UploadedMaterial | null>(null);
     const [importId, setImportId] = useState('');
     const makeMaterialPublic = useMakeMaterialPublic();
     const importSharedMaterial = useImportSharedMaterial();
 
-    // Voice Hook
     const { speak, stopSpeaking, listen, isListening, isSpeaking, isSupported: isSpeechSupported } = useSpeech();
 
     useEffect(() => {
@@ -111,7 +109,6 @@ export default function LibraryTab() {
     }, [chatHistory, isChatting]);
 
     const handlePdfFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        // ... (existing code) ...
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -139,8 +136,6 @@ export default function LibraryTab() {
             setIsExtracting(false);
         }
     };
-
-    // ... (keep extractTextFromPdf, handleUpload, resetForm, handleDelete, analyzeSyllabus, handleSummarize, etc.) ...
 
     const extractTextFromPdf = async (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -411,7 +406,7 @@ export default function LibraryTab() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* ... (Header and Upload Grid same as before) ... */}
+
             <div className="flex items-center gap-3 mb-8">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Library className="h-6 w-6" />
@@ -466,7 +461,7 @@ export default function LibraryTab() {
                                 )}
                             </TabsContent>
                             <TabsContent value="pdf" className="space-y-4">
-                                {/* ... (PDF Upload UI same as before) ... */}
+
                                 <div className="space-y-2">
                                     <Label htmlFor="pdf-title">Document Title</Label>
                                     <Input
@@ -539,7 +534,7 @@ export default function LibraryTab() {
                                 )}
                             </TabsContent>
                             <TabsContent value="text" className="space-y-4">
-                                {/* ... (Text Upload UI same as before) ... */}
+
                                 <div className="space-y-2">
                                     <Label htmlFor="text-title">Title</Label>
                                     <Input
@@ -617,7 +612,7 @@ export default function LibraryTab() {
                     </CardContent>
                 </Card>
 
-                {/* Materials List */}
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Your Materials</CardTitle>
@@ -672,7 +667,7 @@ export default function LibraryTab() {
                 </Card>
             </div>
 
-            {/* View Material Dialog - Keep as is */}
+
             <Dialog open={!!viewMaterial} onOpenChange={() => setViewMaterial(null)}>
                 <DialogContent className="w-full h-full max-w-none rounded-none sm:h-auto sm:max-h-[80vh] sm:max-w-3xl sm:rounded-lg">
                     <DialogHeader>
@@ -696,7 +691,7 @@ export default function LibraryTab() {
                 </DialogContent>
             </Dialog>
 
-            {/* Smart Summary Dialog - Keep as is */}
+
             <Dialog open={!!summaryMaterial} onOpenChange={() => setSummaryMaterial(null)}>
                 <DialogContent className="w-full h-full max-w-none rounded-none sm:h-[95vh] sm:w-[95vw] sm:max-w-[95vw] sm:rounded-lg flex flex-col p-4 sm:p-6">
                     <DialogHeader>
@@ -729,7 +724,7 @@ export default function LibraryTab() {
                 </DialogContent>
             </Dialog>
 
-            {/* Chat Dialog - NEW */}
+
             <Dialog open={!!chatMaterial} onOpenChange={() => setChatMaterial(null)}>
                 <DialogContent className="w-full h-full max-w-none rounded-none sm:h-[80vh] sm:max-w-5xl sm:rounded-lg flex flex-col">
                     <DialogHeader>
@@ -817,7 +812,7 @@ export default function LibraryTab() {
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Confirmation Dialog - Keep as is */}
+
             <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>

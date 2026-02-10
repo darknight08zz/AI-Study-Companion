@@ -1,17 +1,15 @@
 
 import { generateContent } from './gemini';
 
-/**
- * Extract Key Concepts using GenAI
- */
+
 export const extractKeyConcepts = async (content: string, limit: number = 10): Promise<string[]> => {
     const prompt = `Identify the top ${limit} key concepts or technical terms from the following text. Return them as a JSON array of strings.
     
-    Text: ${content.substring(0, 10000)} ...`; // Truncate if too long, though Gemini 1.5 has large context
+    Text: ${content.substring(0, 10000)} ...`;
 
     try {
         const result = await generateContent(prompt);
-        // Clean up markdown code blocks if present
+
         const jsonStr = result.replace(/```json|```/g, '').trim();
         return JSON.parse(jsonStr);
     } catch (e) {

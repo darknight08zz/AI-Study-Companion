@@ -54,7 +54,6 @@ export default function ProgressTab() {
     const totalTasks = tasks.length;
     const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
-    // Calculate study streak
     const calculateStreak = () => {
         if (quizResults.length === 0 && completedTasks === 0) return 0;
 
@@ -85,7 +84,6 @@ export default function ProgressTab() {
 
     const studyStreak = calculateStreak();
 
-    // Prepare quiz performance trend data by date
     const quizTrendData = quizResults
         .map((result) => ({
             date: new Date(Number(result.timestamp) / 1000000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -95,7 +93,6 @@ export default function ProgressTab() {
         .sort((a, b) => a.timestamp - b.timestamp)
         .slice(-10);
 
-    // Calculate improvement trend
     const calculateImprovement = () => {
         if (quizTrendData.length < 2) return 0;
         const firstHalf = quizTrendData.slice(0, Math.floor(quizTrendData.length / 2));
@@ -109,7 +106,6 @@ export default function ProgressTab() {
 
     const improvement = calculateImprovement();
 
-    // Daily/Weekly completion data
     const getDailyWeeklyData = () => {
         const now = Date.now();
         const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -139,7 +135,6 @@ export default function ProgressTab() {
 
     const weeklyData = getDailyWeeklyData();
 
-    // Time spent per subject (estimated based on task count)
     const getSubjectBreakdown = () => {
         const subjectMap = new Map<string, number>();
 
@@ -157,7 +152,6 @@ export default function ProgressTab() {
 
     const subjectData = getSubjectBreakdown();
 
-    // Achievement milestones
     const getMilestones = (): Milestone[] => {
         const milestones: Milestone[] = [];
 
@@ -171,7 +165,6 @@ export default function ProgressTab() {
         if (studyStreak >= 3) milestones.push({ title: '3-Day Streak', icon: '🔥', achieved: true });
         if (studyStreak >= 7) milestones.push({ title: '7-Day Streak', icon: '🔥🔥', achieved: true });
 
-        // Add upcoming milestones
         if (totalQuizzes < 5) milestones.push({ title: '5 Quizzes', icon: '🌟', achieved: false });
         if (totalQuizzes < 10) milestones.push({ title: '10 Quizzes', icon: '🏆', achieved: false });
         if (completedTasks < 5) milestones.push({ title: '5 Tasks', icon: '💪', achieved: false });
@@ -222,7 +215,7 @@ export default function ProgressTab() {
                     <p className="text-muted-foreground">Monitor your learning journey and achievements</p>
                 </div>
 
-                {/* Level Progress */}
+
                 <Card className="bg-gradient-to-r from-primary/10 to-transparent border-none">
                     <CardContent className="pt-6">
                         <div className="flex justify-between items-end mb-2">
@@ -245,7 +238,7 @@ export default function ProgressTab() {
                     </CardContent>
                 </Card>
 
-                {/* Enhanced Stats Grid */}
+
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -337,7 +330,7 @@ export default function ProgressTab() {
                     </Tooltip>
                 </div>
 
-                {/* Achievement Milestones */}
+
                 {milestones.length > 0 && (
                     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
                         <CardHeader>
@@ -372,7 +365,7 @@ export default function ProgressTab() {
                     </Card>
                 )}
 
-                {/* Daily/Weekly Activity Chart */}
+
                 {weeklyData.some(d => d.quizzes > 0 || d.tasks > 0) && (
                     <Card>
                         <CardHeader>

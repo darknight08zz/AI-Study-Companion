@@ -13,7 +13,6 @@ export default function ProfileSetup() {
     const [name, setName] = useState(user?.user_metadata?.name || user?.user_metadata?.full_name || '');
     const saveProfile = useSaveCallerUserProfile();
 
-    // Effect to update name if user loads later (edge case)
     useEffect(() => {
         if (!name && user?.user_metadata) {
             setName(user.user_metadata.name || user.user_metadata.full_name || '');
@@ -30,7 +29,7 @@ export default function ProfileSetup() {
         try {
             await saveProfile.mutateAsync({
                 name: name.trim(),
-                email: user?.email, // Save email from auth user
+                email: user?.email,
                 xp: 0,
                 level: 1,
                 dailyStreak: 0,

@@ -10,7 +10,7 @@ interface LandingPageProps {
 export default function LandingPage({ onLoginClick, onSignUpClick }: LandingPageProps) {
     return (
         <div className="min-h-screen flex flex-col bg-background font-sans">
-            {/* Header */}
+
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center justify-between">
                     <div className="flex items-center gap-2">

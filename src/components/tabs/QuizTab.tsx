@@ -20,9 +20,6 @@ interface Question {
     explanation: string;
 }
 
-// Convert GeneratedQuestion to component Question interface if needed, or unify.
-// The component uses 'Question' interface locally defined which matches.
-
 const sampleQuestions: Question[] = [
     {
         id: 1,
@@ -64,7 +61,7 @@ const sampleQuestions: Question[] = [
 export default function QuizTab() {
     const [quizStarted, setQuizStarted] = useState(false);
     const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [questions, setQuestions] = useState<Question[]>([]); // Use dynamic state instead of const
+    const [questions, setQuestions] = useState<Question[]>([]);
     const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>([]);
     const [showResults, setShowResults] = useState(false);
     const [selectedMaterialId, setSelectedMaterialId] = useState<string>('');
@@ -77,7 +74,6 @@ export default function QuizTab() {
     const { data: savedQuizzes = [] } = useGetQuizzes();
     const deleteQuiz = useDeleteQuiz();
 
-    // Initialize with sample if no generation happens
     const startSampleQuiz = () => {
         setQuestions(sampleQuestions);
         setSelectedAnswers(new Array(sampleQuestions.length).fill(null));
@@ -101,7 +97,6 @@ export default function QuizTab() {
             const count = questionCount[0];
             const generatedQuestions = await generateQuizFromContent(material.content, 'medium', count);
 
-            // Auto-save the quiz
             const quizTitle = `Quiz: ${material.title} (${new Date().toLocaleDateString()})`;
             await saveQuiz.mutateAsync({
                 title: quizTitle,
@@ -114,7 +109,6 @@ export default function QuizTab() {
                 materialId: material.id
             });
 
-            // Map to local Question interface
             const mappedQuestions: Question[] = generatedQuestions.map(q => ({
                 id: q.id,
                 question: q.question,
@@ -143,7 +137,7 @@ export default function QuizTab() {
             question: q.text,
             options: q.options,
             correctAnswer: q.correctOptionIndex,
-            explanation: "Review the material for more details." // Saved quizzes might not have explanation yet unless schema updated
+            explanation: "Review the material for more details."
         }));
 
         setQuestions(mappedQuestions);
@@ -223,7 +217,7 @@ export default function QuizTab() {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                    {/* AI Generator Card */}
+
                     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -283,7 +277,7 @@ export default function QuizTab() {
                         </CardContent>
                     </Card>
 
-                    {/* Saved Quizzes Card */}
+
                     <Card className="md:col-span-2">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -320,7 +314,7 @@ export default function QuizTab() {
                         </CardContent>
                     </Card>
 
-                    {/* Quick Start Card */}
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Quick Practice</CardTitle>

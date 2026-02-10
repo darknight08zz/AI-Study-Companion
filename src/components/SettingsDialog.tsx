@@ -18,16 +18,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const { data: userProfile } = useGetCallerUserProfile();
     const saveProfileMutation = useSaveCallerUserProfile();
 
-    // Profile State
+
     const [displayName, setDisplayName] = useState('');
     const [aiPersona, setAiPersona] = useState('friendly');
 
-    // Password State
+
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-    // Initialize state when profile loads or dialog opens
+
     useEffect(() => {
         if (userProfile && open) {
             setDisplayName(userProfile.name || '');

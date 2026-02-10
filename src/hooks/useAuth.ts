@@ -37,12 +37,11 @@ export const useAuth = create<AuthState>((set) => ({
             if (error) {
                 alert(`Sign up failed: ${error.message}. Please check your connection and try again.`);
             } else {
-                // If we have a session/user and a name, try to create the profile immediately
                 if (data.user && data.session && name) {
                     try {
                         await databaseService.saveCallerUserProfile({
                             name: name,
-                            email: email, // Save email
+                            email: email,
                             xp: 0,
                             level: 1,
                             dailyStreak: 0,
@@ -74,7 +73,7 @@ export const useAuth = create<AuthState>((set) => ({
     checkSession: async () => {
         set({ isInitializing: true });
 
-        // Check active session
+
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user) {
@@ -83,7 +82,7 @@ export const useAuth = create<AuthState>((set) => ({
             set({ isAuthenticated: false, user: null, isInitializing: false });
         }
 
-        // Listen for changes
+
         supabase.auth.onAuthStateChange((_event, session) => {
             if (session?.user) {
                 set({ isAuthenticated: true, user: session.user, isInitializing: false });
@@ -94,17 +93,17 @@ export const useAuth = create<AuthState>((set) => ({
     }
 }));
 
-// Initialize session check on load
+
 useAuth.getState().checkSession();
 
-// Compatibility hook for existing code using 'identity'
+
 /**
  * @deprecated Use useAuth() directly instead. This adapter is for backward compatibility.
  */
 export function useInternetIdentity() {
     const { isAuthenticated, user, login, logout, isInitializing } = useAuth();
 
-    // Adapt Supabase user to the 'identity' shape expected by the UI
+
     const identity = user ? {
         getPrincipal: () => ({
             toText: () => user.id

@@ -36,11 +36,10 @@ export const generateQuizFromContent = async (content: string, difficulty: 'easy
 
     try {
         const result = await generateContent(prompt);
-        // Clean up markdown code blocks if present
+
         const jsonStr = result.replace(/```json|```/g, '').trim();
         const questions = JSON.parse(jsonStr);
 
-        // Ensure IDs are numbers
         return questions.map((q: any, index: number) => ({
             ...q,
             id: index + 1

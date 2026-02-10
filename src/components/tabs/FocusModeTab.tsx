@@ -38,14 +38,13 @@ export default function FocusModeTab() {
         } else if (timeLeft === 0) {
             setIsActive(false);
             toast.success("Timer finished! Great job!");
-            // Play notification sound here if we had one
+
         }
 
         return () => clearInterval(interval);
     }, [isActive, timeLeft]);
 
     useEffect(() => {
-        // Change wellness tip every 5 minutes or when mode changes
         setWellnessTip(WELLNESS_TIPS[Math.floor(Math.random() * WELLNESS_TIPS.length)]);
     }, [mode]);
 

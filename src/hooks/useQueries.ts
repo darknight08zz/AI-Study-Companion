@@ -287,7 +287,7 @@ export function useImportSharedMaterial() {
 }
 
 // Sharing Queries
-// Hooks removed (duplicates) home
+
 
 // --- Quizzes Persistence Hooks ---
 
@@ -335,6 +335,18 @@ export function useSaveFlashcardDeck() {
     });
 }
 
+export function useUpdateFlashcardDeck() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (params: { id: string; cards: any[] }) => {
+            return databaseService.updateFlashcardDeck(params.id, params.cards);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['flashcard_decks'] });
+        },
+    });
+}
+
 export function useDeleteFlashcardDeck() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -347,7 +359,7 @@ export function useDeleteFlashcardDeck() {
     });
 }
 
-// Stubbed out remaining mock queries for compilation (cleaned up)
+
 export function useGetAllAnalyzedSyllabi() { return useQuery({ queryKey: ['stub'], queryFn: () => [] }); }
 export function useGetAnalyzedSyllabusByMaterial(id: string) { return useQuery({ queryKey: ['stub'], queryFn: () => null }); }
 

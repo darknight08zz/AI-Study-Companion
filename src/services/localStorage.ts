@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 
-// Types derived from backend structures
 export type TaskStatus = 'notStarted' | 'inProgress' | 'completed';
 
 export const TaskStatusEnum = {
@@ -9,7 +8,7 @@ export const TaskStatusEnum = {
     completed: 'completed' as TaskStatus,
 };
 
-// Helper for UI to checking status
+
 export const isTaskStatus = (status: TaskStatus, check: keyof typeof TaskStatusEnum) => {
     return status === check;
 }
@@ -52,7 +51,7 @@ export interface UserProfile {
     xp: number;
     level: number;
     dailyStreak: number;
-    lastActivityDate: number; // Timestamp
+    lastActivityDate: number;
 }
 
 export interface UploadedMaterial {
@@ -62,7 +61,7 @@ export interface UploadedMaterial {
     owner: string;
     createdAt: number;
     fileType: FileType;
-    originalFile?: any; // Simulating ExternalBlob
+    originalFile?: any;
 }
 
 export interface QuizResult {
@@ -73,7 +72,6 @@ export interface QuizResult {
     user: string;
 }
 
-// Additional types for features likely in progress or future
 export interface AnalyzedSyllabus {
     id: string;
     materialId: string;
@@ -119,20 +117,19 @@ export interface Question {
     correctOptionIndex: number;
 }
 
-// CURRENT USER ID (Simulated)
+
 const CURRENT_USER_ID = 'local-user-principal-id';
 
-// Helper to serialize BigInt for JSON storage
+
 const replacer = (key: string, value: any) => {
     if (typeof value === 'bigint') {
-        return value.toString(); // Convert to string (though we avoided BigInt usage mostly now)
+        return value.toString();
     }
     return value;
 };
 
-// Helper to deserialize BigInt from JSON storage
+
 const reviver = (key: string, value: any) => {
-    // Legacy support if there are '123n' strings
     if (typeof value === 'string' && /^\d+n$/.test(value)) {
         return Number(value.slice(0, -1));
     }
@@ -155,7 +152,7 @@ class LocalStorageService {
         localStorage.setItem(key, JSON.stringify(value, replacer));
     }
 
-    // User Profile
+
     getCallerUserProfile(): UserProfile | null {
         return this.getItem<UserProfile>('userProfile');
     }
@@ -164,19 +161,15 @@ class LocalStorageService {
         this.setItem('userProfile', profile);
     }
 
-    // Gamification Helpers
+
     addXp(amount: number): { newLevel: number; leveledUp: boolean } {
         const profile = this.getCallerUserProfile();
         if (!profile) return { newLevel: 1, leveledUp: false };
 
-        // Ensure defaults if missing (migration)
         const currentXp = Number(profile.xp || 0);
         const currentLevel = profile.level || 1;
 
         const newXp = currentXp + amount;
-
-        // Simple Level Formula: Level = floor(sqrt(XP / 100)) + 1
-        // XP required for level L: 100 * (L-1)^2
         const newLevel = Math.floor(Math.sqrt(newXp / 100)) + 1;
         const leveledUp = newLevel > currentLevel;
 
@@ -186,7 +179,7 @@ class LocalStorageService {
             level: newLevel
         });
 
-        this.updateStreak(); // Check streak whenever XP is gained
+        this.updateStreak();
 
         return { newLevel, leveledUp };
     }
@@ -207,10 +200,10 @@ class LocalStorageService {
             if (isNextDay) {
                 newStreak++;
             } else if (!isSameDay) {
-                newStreak = 1; // Reset if missed a day (except if same day)
+                newStreak = 1;
             }
         } else {
-            newStreak = 1; // First activity
+            newStreak = 1;
         }
 
         this.saveCallerUserProfile({
@@ -220,7 +213,7 @@ class LocalStorageService {
         });
     }
 
-    // Tasks
+
     getAllTasks(): StudyTask[] {
         const tasks = this.getItem<Record<string, StudyTask>>('studyTasks') || {};
         return Object.values(tasks);
@@ -266,7 +259,7 @@ class LocalStorageService {
         this.setItem('studyTasks', tasks);
     }
 
-    // Quiz Results
+
     getQuizResultsForCaller(): QuizResult[] {
         const results = this.getItem<Record<string, QuizResult>>('quizResults') || {};
         return Object.values(results);
@@ -287,7 +280,7 @@ class LocalStorageService {
         return id;
     }
 
-    // Materials
+
     getAllMaterialsForCaller(): UploadedMaterial[] {
         const materials = this.getItem<Record<string, UploadedMaterial>>('materials') || {};
         return Object.values(materials);
@@ -318,7 +311,6 @@ class LocalStorageService {
     }
 
     uploadPdfWithBlob(title: string, content: string, pdfBlob: any): string {
-        // In local storage, we won't actually store the blob properly, but we'll store the metadata
         const id = uuidv4();
         const material: UploadedMaterial = {
             id,
@@ -327,8 +319,6 @@ class LocalStorageService {
             owner: CURRENT_USER_ID,
             createdAt: Date.now(),
             fileType: FileType.pdf,
-            // originalFile: pdfBlob - Removing this to prevent hitting 5MB LocalStorage limit
-            // We only need the text content for the AI features anyway.
         };
         const materials = this.getItem<Record<string, UploadedMaterial>>('materials') || {};
         materials[id] = material;
@@ -342,26 +332,23 @@ class LocalStorageService {
         this.setItem('materials', materials);
     }
 
-    // Analyzed Syllabi (Mock)
     getAllAnalyzedSyllabiForCaller(): AnalyzedSyllabus[] { return []; }
     getAnalyzedSyllabusByMaterial(materialId: string): AnalyzedSyllabus | null { return null; }
     createAnalyzedSyllabus(materialId: string, topics: Topic[]): string { return 'mock-id'; }
     updateAnalyzedSyllabus(id: string, topics: Topic[]): void { }
     deleteAnalyzedSyllabus(id: string): void { }
 
-    // Study Plans (Mock)
     getAllStudyPlansForCaller(): StudyPlan[] { return []; }
     createStudyPlan(sessions: StudySession[], examDate: number, hoursPerDay: number): string { return 'mock-id'; }
     updateStudyPlan(id: string, sessions: StudySession[], examDate: number, hoursPerDay: number): void { }
     deleteStudyPlan(id: string): void { }
 
-    // Quizzes (Mock)
+
     getAllQuizzesForCaller(): Quiz[] { return []; }
     getQuizzesByTopic(topicId: string): Quiz[] { return []; }
     createQuiz(questions: Question[], topicId: string): string { return 'mock-id'; }
     deleteQuiz(id: string): void { }
 
-    // Mock Methods used by useQueries
     getTasksByOwner(owner: string) { return this.getAllTasks(); }
 }
 

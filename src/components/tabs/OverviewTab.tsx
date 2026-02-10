@@ -52,11 +52,11 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
         .sort((a, b) => Number(a.dueDate - b.dueDate))
         .slice(0, 3);
 
-    // AI-based study insights
+
     const getStudyInsights = (): Insight[] => {
         const insights: Insight[] = [];
 
-        // Quiz performance insights
+
         if (totalQuizzes >= 3) {
             const recentQuizzes = quizResults.slice(-3);
             const recentAvg = recentQuizzes.reduce((acc, r) => acc + (Number(r.score) / Number(r.totalQuestions)) * 100, 0) / recentQuizzes.length;
@@ -76,7 +76,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
             }
         }
 
-        // Task completion insights
+
         if (inProgressTasks > 3) {
             insights.push({
                 type: 'info',
@@ -93,7 +93,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
             });
         }
 
-        // Motivational insights
+
         if (completionRate >= 80) {
             insights.push({
                 type: 'positive',
@@ -113,11 +113,11 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
         return insights;
     };
 
-    // Smart study recommendations
+
     const getSmartRecommendations = (): Recommendation[] => {
         const recommendations: Recommendation[] = [];
 
-        // Priority recommendations based on incomplete tasks
+
         const incompleteTasks = tasks.filter(t => t.status !== TaskStatusEnum.completed);
         const overdueTasks = incompleteTasks.filter(t => Number(t.dueDate) < Date.now() * 1000000);
 
@@ -131,7 +131,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
             });
         }
 
-        // Recommend based on quiz performance
+
         if (totalQuizzes >= 2) {
             const lastQuizScore = (Number(quizResults[0].score) / Number(quizResults[0].totalQuestions)) * 100;
             if (lastQuizScore < 70) {
@@ -145,7 +145,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
             }
         }
 
-        // Recommend starting new tasks
+
         if (notStartedTasks > 0 && inProgressTasks === 0) {
             const nextTask = tasks.find(t => t.status === TaskStatusEnum.notStarted);
             if (nextTask) {
@@ -159,7 +159,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
             }
         }
 
-        // Encourage quiz taking
+
         if (totalQuizzes === 0 || (totalTasks > 0 && totalQuizzes < totalTasks / 2)) {
             recommendations.push({
                 priority: 'low',
@@ -198,7 +198,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
     return (
         <TooltipProvider>
             <div className="space-y-6 animate-in fade-in duration-500">
-                {/* Header Section */}
+
                 <div className="flex items-center justify-between pb-2">
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h2>
@@ -209,12 +209,12 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
                     </div>
                 </div>
 
-                {/* Main Bento Grid */}
+
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                    {/* Row 1: Hero/Actions (8 cols) + Progress (4 cols) */}
+
                     <div className="md:col-span-8 grid gap-6">
-                        {/* Quick Actions Hero */}
+
                         <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-10 opacity-10">
                                 <Sparkles className="w-40 h-40 text-primary" />
@@ -241,7 +241,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Stats Row (Nested Grid) */}
+
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <Card className="hover:bg-accent/50 transition-colors">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -276,7 +276,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
                         </div>
                     </div>
 
-                    {/* Completion Ring / Summary (4 cols) */}
+
                     <Card className="md:col-span-4 flex flex-col justify-center items-center p-6 bg-card/50 backdrop-blur-sm border-border/60">
                         <div className="relative flex items-center justify-center w-40 h-40">
                             {/* Simple CSS-only Circular Progress placeholder - Recharts PieChart would be better but keeping it simple/robust for now */}
@@ -318,7 +318,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps) {
                         </div>
                     </Card>
 
-                    {/* Row 2: Upcoming (7 cols) + Recommendations (5 cols) */}
+
                     <Card className="md:col-span-7 h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">

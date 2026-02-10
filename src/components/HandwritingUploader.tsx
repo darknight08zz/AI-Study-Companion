@@ -21,7 +21,7 @@ export function HandwritingUploader({ onTranscriptionComplete }: HandwritingUplo
             return;
         }
 
-        // Create preview
+
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
 
@@ -33,7 +33,7 @@ export function HandwritingUploader({ onTranscriptionComplete }: HandwritingUplo
         } catch (error) {
             console.error(error);
             toast.error('Failed to transcribe handwriting');
-            setPreviewUrl(null); // Reset on error
+            setPreviewUrl(null);
         } finally {
             setIsTranscribing(false);
         }

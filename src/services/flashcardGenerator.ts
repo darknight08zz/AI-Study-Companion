@@ -5,6 +5,10 @@ export interface Flashcard {
     id: string;
     term: string;
     definition: string;
+    interval: number;
+    repetition: number;
+    efactor: number;
+    nextReviewDate: number;
 }
 
 export const generateFlashcardsFromContent = async (content: string, cardCount: number = 10): Promise<Flashcard[]> => {
@@ -23,13 +27,17 @@ export const generateFlashcardsFromContent = async (content: string, cardCount: 
 
     try {
         const result = await generateContent(prompt);
-        // Clean up markdown code blocks if present
+
         const jsonStr = result.replace(/```json|```/g, '').trim();
         const cards = JSON.parse(jsonStr);
 
         return cards.map((card: any, index: number) => ({
             ...card,
-            id: `card-${Date.now()}-${index}`
+            id: `card-${Date.now()}-${index}`,
+            interval: 0,
+            repetition: 0,
+            efactor: 2.5,
+            nextReviewDate: Date.now()
         }));
     } catch (e) {
         console.error("Failed to generate flashcards", e);

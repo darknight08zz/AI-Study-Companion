@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useGetAllMaterialsSortedByDate, useSaveFlashcardDeck, useGetFlashcardDecks, useDeleteFlashcardDeck } from '../../hooks/useQueries';
+import { useGetAllMaterialsSortedByDate, useSaveFlashcardDeck, useUpdateFlashcardDeck, useGetFlashcardDecks, useDeleteFlashcardDeck } from '../../hooks/useQueries';
 import { generateFlashcardsFromContent, type Flashcard } from '../../services/flashcardGenerator';
+import { calculateSM2, initialSM2State } from '../../utils/sm2';
 import { Layers, RotateCw, Check, X as XIcon, ChevronLeft, ChevronRight, Zap, Download, Upload, Save, Trash2, Play } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
@@ -15,12 +16,14 @@ export default function FlashcardsTab() {
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [cardCount, setCardCount] = useState([10]);
+    const [currentDeckId, setCurrentDeckId] = useState<string | null>(null);
+    const [deckTitle, setDeckTitle] = useState<string>("");
 
     const saveDeck = useSaveFlashcardDeck();
+    const updateDeck = useUpdateFlashcardDeck();
     const { data: savedDecks = [] } = useGetFlashcardDecks();
     const deleteDeck = useDeleteFlashcardDeck();
 
-    // Study Mode State
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [studySessionActive, setStudySessionActive] = useState(false);
@@ -40,15 +43,16 @@ export default function FlashcardsTab() {
             if (cards.length === 0) {
                 toast.error('Could not generate flashcards from this content. Try a different text.');
             } else {
-                // Auto save
-                const deckTitle = `Deck: ${material.title} (${new Date().toLocaleDateString()})`;
-                await saveDeck.mutateAsync({
-                    title: deckTitle,
+                const title = `Deck: ${material.title} (${new Date().toLocaleDateString()})`;
+                const newDeckId = await saveDeck.mutateAsync({
+                    title: title,
                     cards: cards,
                     materialId: material.id
                 });
 
                 setFlashcards(cards);
+                setDeckTitle(title);
+                setCurrentDeckId(newDeckId);
                 setStudySessionActive(true);
                 setCurrentIndex(0);
                 setIsFlipped(false);
@@ -64,7 +68,14 @@ export default function FlashcardsTab() {
     };
 
     const handleLoadDeck = (deck: any) => {
-        setFlashcards(deck.cards);
+        const migratedCards = deck.cards.map((c: any) => ({
+            ...initialSM2State,
+            ...c
+        }));
+
+        setFlashcards(migratedCards);
+        setCurrentDeckId(deck.id);
+        setDeckTitle(deck.title);
         setStudySessionActive(true);
         setCurrentIndex(0);
         setIsFlipped(false);
@@ -80,6 +91,56 @@ export default function FlashcardsTab() {
         }
     };
 
+    const handleRateCard = (quality: number) => {
+        const currentCard = flashcards[currentIndex];
+        const { interval, repetition, efactor } = currentCard;
+
+        const nextState = calculateSM2(
+            interval ?? 0,
+            repetition ?? 0,
+            efactor ?? 2.5,
+            quality
+        );
+
+        const updatedCards = [...flashcards];
+        updatedCards[currentIndex] = {
+            ...currentCard,
+            ...nextState
+        };
+        setFlashcards(updatedCards);
+
+
+        let message = "";
+        if (quality < 3) message = "Review soon";
+        else if (quality === 3) message = "Hard";
+        else if (quality === 4) message = "Good";
+        else if (quality === 5) message = "Easy!";
+        toast(message, {
+            duration: 1000,
+            description: `Next review: ${new Date(nextState.nextReviewDate).toLocaleDateString()}`
+        });
+
+        handleNext();
+    };
+
+    const handleSaveProgress = async () => {
+        if (!currentDeckId) {
+            toast.error("No active deck to save.");
+            return;
+        }
+
+        try {
+            await updateDeck.mutateAsync({
+                id: currentDeckId,
+                cards: flashcards
+            });
+            toast.success("Progress saved!");
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to save progress.");
+        }
+    };
+
 
     const handleExport = () => {
         if (flashcards.length === 0) return;
@@ -87,7 +148,7 @@ export default function FlashcardsTab() {
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
         downloadAnchorNode.setAttribute("download", "study_deck.json");
-        document.body.appendChild(downloadAnchorNode); // required for firefox
+        document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
         toast.success("Deck exported successfully!");
@@ -105,7 +166,7 @@ export default function FlashcardsTab() {
                 const text = e.target?.result;
                 if (typeof text === 'string') {
                     const importedCards = JSON.parse(text) as Flashcard[];
-                    // Basic validation
+
                     if (Array.isArray(importedCards) && importedCards.every(c => c.term && c.definition)) {
                         setFlashcards(importedCards);
                         setStudySessionActive(true);
@@ -123,7 +184,7 @@ export default function FlashcardsTab() {
             }
         };
         reader.readAsText(fileObj);
-        // Reset input so same file can be selected again if needed
+
         event.target.value = '';
     };
 
@@ -131,7 +192,7 @@ export default function FlashcardsTab() {
         setIsFlipped(false);
         setTimeout(() => {
             setCurrentIndex((prev) => (prev + 1) % flashcards.length);
-        }, 300); // Wait for flip back
+        }, 300);
     };
 
     const handlePrev = () => {
@@ -176,7 +237,7 @@ export default function FlashcardsTab() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Flashcards</h2>
-                    <p className="text-muted-foreground">Master key concepts with active recall</p>
+                    <p className="text-muted-foreground">Master key concepts with active recall (SM-2 Spaced Repetition)</p>
                 </div>
             </div>
 
@@ -301,13 +362,13 @@ export default function FlashcardsTab() {
                                 transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
                             }}
                         >
-                            {/* Front */}
+
                             <div
                                 className="absolute h-full w-full"
                                 style={{
                                     backfaceVisibility: 'hidden',
                                     WebkitBackfaceVisibility: 'hidden',
-                                    zIndex: isFlipped ? 0 : 1 // Ensure front is top when not flipped
+                                    zIndex: isFlipped ? 0 : 1
                                 }}
                             >
                                 <Card className="h-full flex items-center justify-center p-8 text-center hover:shadow-lg transition-shadow overflow-hidden bg-card">
@@ -321,18 +382,18 @@ export default function FlashcardsTab() {
                                 </Card>
                             </div>
 
-                            {/* Back */}
+
                             <div
                                 className="absolute h-full w-full"
                                 style={{
                                     backfaceVisibility: 'hidden',
                                     WebkitBackfaceVisibility: 'hidden',
                                     transform: 'rotateY(180deg)',
-                                    zIndex: isFlipped ? 1 : 0 // Ensure back is top when flipped
+                                    zIndex: isFlipped ? 1 : 0
                                 }}
                             >
                                 <Card className="h-full flex items-center justify-center p-8 text-center bg-card border-primary/20 overflow-hidden relative">
-                                    {/* Decorative background for Back card */}
+
                                     <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
 
                                     <div className="flex flex-col h-full justify-center items-center w-full z-10">
@@ -346,28 +407,54 @@ export default function FlashcardsTab() {
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-center gap-4">
-                        <Button variant="outline" size="icon" onClick={handlePrev}>
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" className="flex-1" onClick={markUnknown}>
-                            <XIcon className="mr-2 h-4 w-4" /> Needs Review
-                        </Button>
-                        <Button variant="default" className="flex-1 bg-green-600 hover:bg-green-700" onClick={markKnown}>
-                            <Check className="mr-2 h-4 w-4" /> Got it
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={handleNext}>
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
 
-                    <div className="text-center">
-                        <Button variant="link" size="sm" onClick={() => setStudySessionActive(false)}>
-                            <RotateCw className="mr-2 h-3 w-3" /> Start Over
-                        </Button>
-                        <Button variant="link" size="sm" onClick={handleExport}>
-                            <Download className="mr-2 h-3 w-3" /> Export Deck
-                        </Button>
+                    {isFlipped ? (
+                        <div className="grid grid-cols-4 gap-2">
+                            <div className="flex flex-col gap-1">
+                                <Button variant="destructive" className="h-auto py-3 flex flex-col items-center" onClick={() => handleRateCard(1)}>
+                                    <span className="font-bold">Again</span>
+                                    <span className="text-[10px] font-normal opacity-80">&lt; 1 min</span>
+                                </Button>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <Button variant="secondary" className=" bg-orange-100 hover:bg-orange-200 text-orange-900 h-auto py-3 flex flex-col items-center" onClick={() => handleRateCard(3)}>
+                                    <span className="font-bold">Hard</span>
+                                    <span className="text-[10px] font-normal opacity-80">2 days</span>
+                                </Button>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <Button variant="secondary" className="bg-blue-100 hover:bg-blue-200 text-blue-900 h-auto py-3 flex flex-col items-center" onClick={() => handleRateCard(4)}>
+                                    <span className="font-bold">Good</span>
+                                    <span className="text-[10px] font-normal opacity-80">4 days</span>
+                                </Button>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <Button variant="secondary" className="bg-green-100 hover:bg-green-200 text-green-900 h-auto py-3 flex flex-col items-center" onClick={() => handleRateCard(5)}>
+                                    <span className="font-bold">Easy</span>
+                                    <span className="text-[10px] font-normal opacity-80">7 days</span>
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center">
+                            <Button variant="outline" size="lg" className="w-full max-w-sm" onClick={() => setIsFlipped(true)}>
+                                Show Answer
+                            </Button>
+                        </div>
+                    )}
+
+                    <div className="text-center pt-4 border-t">
+                        <div className="flex justify-center gap-4">
+                            <Button variant="link" size="sm" onClick={() => setStudySessionActive(false)}>
+                                <RotateCw className="mr-2 h-3 w-3" /> Stop Study
+                            </Button>
+                            <Button variant="link" size="sm" onClick={handleSaveProgress}>
+                                <Save className="mr-2 h-3 w-3" /> Save Progress
+                            </Button>
+                            <Button variant="link" size="sm" onClick={handleExport}>
+                                <Download className="mr-2 h-3 w-3" /> Export Deck
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

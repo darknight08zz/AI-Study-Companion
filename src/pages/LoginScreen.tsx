@@ -20,13 +20,11 @@ export default function LoginScreen({ initialSignUp = false, onBack }: LoginScre
 
     const handleSignUp = (e: React.FormEvent) => {
         e.preventDefault();
-        // Pass isSignUp=true and the name
         login(email, password, true, name);
     };
 
     const handleSignIn = (e: React.FormEvent) => {
         e.preventDefault();
-        // Pass isSignUp=false
         login(email, password, false);
     };
 
@@ -52,7 +50,7 @@ export default function LoginScreen({ initialSignUp = false, onBack }: LoginScre
                 </div>
             )}
             <div className={`login-container ${isRightPanelActive ? "right-panel-active" : ""}`} id="container">
-                {/* Sign Up Container */}
+
                 <div className="form-container sign-up-container bg-background">
                     <form className="bg-background flex flex-col items-center justify-center px-12 text-center h-full" onSubmit={handleSignUp}>
                         <h1 className="font-bold text-3xl mb-0 dark:text-foreground">Create Account</h1>
