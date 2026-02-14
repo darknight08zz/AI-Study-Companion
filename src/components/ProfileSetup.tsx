@@ -12,12 +12,34 @@ export default function ProfileSetup() {
     const { user } = useAuth();
     const [name, setName] = useState(user?.user_metadata?.name || user?.user_metadata?.full_name || '');
     const saveProfile = useSaveCallerUserProfile();
+    const [isAutoCreating, setIsAutoCreating] = useState(false);
 
     useEffect(() => {
-        if (!name && user?.user_metadata) {
-            setName(user.user_metadata.name || user.user_metadata.full_name || '');
-        }
-    }, [user, name]);
+        const autoCreateProfile = async () => {
+            const userName = user?.user_metadata?.name || user?.user_metadata?.full_name;
+            if (userName && !isAutoCreating) {
+                setIsAutoCreating(true);
+                try {
+                    await saveProfile.mutateAsync({
+                        name: userName,
+                        email: user?.email,
+                        xp: 0,
+                        level: 1,
+                        dailyStreak: 0,
+                        lastActivityDate: Date.now()
+                    });
+                    toast.success('Profile created automatically!');
+                } catch (error) {
+                    console.error("Auto profile creation failed:", error);
+                    setIsAutoCreating(false); // Enable manual input on failure
+                }
+            } else if (!name && user?.user_metadata) {
+                setName(user.user_metadata.name || user.user_metadata.full_name || '');
+            }
+        };
+
+        autoCreateProfile();
+    }, [user, saveProfile]); // Removed 'name' dependency to avoid loops
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,6 +63,22 @@ export default function ProfileSetup() {
             console.error(error);
         }
     };
+
+    if (isAutoCreating) {
+        return (
+            <div className="flex min-h-screen items-center justify-center p-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted animate-pulse">
+                            <BookOpen className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <CardTitle className="text-2xl">Setting up your profile...</CardTitle>
+                        <CardDescription>Please wait a moment.</CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen items-center justify-center p-4">
